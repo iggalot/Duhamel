@@ -62,12 +62,20 @@ public partial class Player : CharacterBody2D
 //        GlobalPosition = new Vector2(20, 20);  // set the player position inside the room slightly
         DirectionUnitVector = new Vector2(0, 0);
         Direction = Utilities.Directions.DIR_NONE;
+
+        SetCollisionLayerValue(1, false);  // turn off the default
+        SetCollisionLayerValue((int)CollisionLayerAssignments.PLAYER, true);  // assign to proper layer
+
+        SetCollisionMaskValue(1, false);  // turn off the default
+        SetCollisionMaskValue((int)CollisionLayerAssignments.WALLS, true);  // assign to proper layer
+        SetCollisionMaskValue((int)CollisionLayerAssignments.SPELLS_HOSTILE, true);  // assign to proper layer
+        SetCollisionMaskValue((int)CollisionLayerAssignments.ENVIRONMENT, true);  // assign to proper layer
+        SetCollisionMaskValue((int)CollisionLayerAssignments.ITEMS, true);  // assign to proper layer
+        SetCollisionMaskValue((int)CollisionLayerAssignments.MONSTERS, true);  // assign to proper layer
+
     }
     public override void _PhysicsProcess(double delta)
 	{
-        // variable to store the collision information from MoveAndCollide
-        KinematicCollision2D collision_info;
-
         // check for collisions with enemies or objects nearby, or if we are attacking something
         // or if we should move
         GetInput();
@@ -77,44 +85,59 @@ public partial class Player : CharacterBody2D
         // compute the current distance of the player from the target destination point
         var distance = TargetDestinationPosition.DistanceSquaredTo(GlobalPosition);
 
-        // otherwise move the character
-        if (Math.Sqrt(distance) > 3 && (HasCollided == false) && (IsAttacking == false))
+        var collision = MoveAndCollide(Velocity * (float)delta);
+        if(collision != null)
         {
-            // move the character  for this frame
-            collision_info = MoveAndCollide(Velocity * (float)delta);
-        } else
-        {
-            // we've hit something or reached our target destination, so stop the moving.
-            TargetDestinationPosition = GlobalPosition;
-            collision_info = MoveAndCollide(new Vector2(0, 0));
-
-            // Zero out all the movement variables
-            TargetDestinationPosition = GlobalPosition;
+            GD.Print("Player collided at " + GlobalPosition);
             Velocity = new Vector2(0, 0);
-            DirectionUnitVector = new Vector2(0, 0);
-            DirectionVector = new Vector2(0, 0);
-            Direction = Directions.DIR_NONE;
+            DirectionVector = new Vector2(0,0);
+            DirectionUnitVector = DirectionVector.Normalized();
+            TargetDestinationPosition = GlobalPosition;
+
         }
 
-        // check if we collided with something...if so...signal that we've collided so the next iteration zeroes the values.
-        if(collision_info != null)
-        {
-            GD.Print("collided");
-            HasCollided = true;
+        //// MOUSE CLICK MOVEMENT
+        ////
+        //// otherwise move the character
+        //if (Math.Sqrt(distance) > 3 && (HasCollided == false) && (IsAttacking == false))
+        //{
+        //    // move the character  for this frame
+        //    collision_info = MoveAndCollide(Velocity * (float)delta);
+        //} else
+        //{
+        //    // we've hit something or reached our target destination, so stop the moving.
+        //    TargetDestinationPosition = GlobalPosition;
+        //    collision_info = MoveAndCollide(new Vector2(0, 0));
 
-            // Zero out all the movement variables except the facing unit vector
-            TargetDestinationPosition = GlobalPosition;
-            Velocity = new Vector2(0, 0);
-            DirectionUnitVector = new Vector2(0, 0);
-            DirectionVector = new Vector2(0, 0);
-            Direction = Directions.DIR_NONE;
+        //    // Zero out all the movement variables
+        //    TargetDestinationPosition = GlobalPosition;
+        //    Velocity = new Vector2(0, 0);
+        //    DirectionUnitVector = new Vector2(0, 0);
+        //    DirectionVector = new Vector2(0, 0);
+        //    Direction = Directions.DIR_NONE;
+        //}
 
-        } else
-        {
-            //GD.Print("no collision");
+        //// COLLISION CHECKS
+        ////
+        //// check if we collided with something...if so...signal that we've collided so the next iteration zeroes the values.
+        //if(collision_info != null)
+        //{
+        //    GD.Print("collided");
+        //    HasCollided = true;
 
-            HasCollided = false;
-        }
+        //    // Zero out all the movement variables except the facing unit vector
+        //    TargetDestinationPosition = GlobalPosition;
+        //    Velocity = new Vector2(0, 0);
+        //    DirectionUnitVector = new Vector2(0, 0);
+        //    DirectionVector = new Vector2(0, 0);
+        //    Direction = Directions.DIR_NONE;
+
+        //} else
+        //{
+        //    //GD.Print("no collision");
+
+        //    HasCollided = false;
+        //}
 
         Direction = Utilities.GetDirection_9WAY(DirectionVector);
 

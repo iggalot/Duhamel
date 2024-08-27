@@ -4,7 +4,9 @@ namespace ProjectDuhamel.scripts
 {
     public partial class RoomObjects : CharacterBody2D
     {
-        private float speed = 500;
+        // The speed of the object
+        public float Speed { get; set; } = 50;
+
         private Vector2 unit_vector;
         private float rotation = 0;
 
@@ -13,8 +15,12 @@ namespace ProjectDuhamel.scripts
         public int TileSetSourceId { get; set; } = 0;
         public Vector2I[] AtlasCoordArray { get; set; } = null;
 
-        // Vector representing how far to move the item in a given turn 
-        public Vector2 MoveOffsetUnitVector { get; set; } = new Vector2();
+        public int[] CollisionLayer { get; set; }
+        public int[] CollisionMaskValues { get; set; }
+
+        public Utilities.Directions Direction { get; set; } = Utilities.Directions.DIR_NONE;
+        public Vector2 DirectionUnitVector { get; set; } = new Vector2();
+        public Vector2 DirectionVector { get; set; }
 
         // the static body object (with collision and image) tied into it
         public CharacterBody2D CharacterBodyObj { get; set; }
@@ -22,77 +28,99 @@ namespace ProjectDuhamel.scripts
         // the location of the tileset image
         public string AssetPath { get; set; } = string.Empty;
 
-        public Vector2 MoveDirectionUnitVector { get; set; } = new Vector2(0, 0);
-
-        // parameterless constructor
+        /// <summary>
+        /// Parameterless constructor -- needed for Instatiation.
+        /// </summary>
         public RoomObjects()
         {
         }
 
-        public RoomObjects(Vector2 tile_pos, 
-            TileMapLayer map_layer, 
-            int tileset_source_id,
-            Vector2I[] atlas_coord_array,
-            Vector2 move_offset,
-            CharacterBody2D obj) {
+        //public RoomObjects(Vector2 tile_pos, 
+        //    TileMapLayer map_layer, 
+        //    int tileset_source_id,
+        //    Vector2I[] atlas_coord_array,
+        //    CharacterBody2D obj) {
 
-            var move_offset_unit_vector = move_offset.Normalized();
 
-            TilePos = tile_pos;
-            Layer = map_layer;
-            TileSetSourceId = tileset_source_id;
-            AtlasCoordArray = atlas_coord_array;
-            MoveOffsetUnitVector = move_offset_unit_vector;
-            MoveDirectionUnitVector = move_offset_unit_vector;
-            CharacterBodyObj = obj;
-        }
+        //    TilePos = tile_pos;
+        //    Layer = map_layer;
+        //    TileSetSourceId = tileset_source_id;
+        //    AtlasCoordArray = atlas_coord_array;
+        //    CharacterBodyObj = obj;
+        //}
 
         /// <summary>
         /// Used to initialize data for the object after it has been instantiated since you can't call a
         /// constructor with parameters.  Call this immediately after instantiation of the object.
         /// </summary>
-        /// <param name="tile_pos"></param>
-        /// <param name="layer"></param>
-        /// <param name="tile_set_source_id"></param>
-        /// <param name="atlas_coord_array"></param>
-        /// <param name="move_vector"></param>
-        /// <param name="obj"></param>
-        /// <param name="resource_path"></param>
-        public void AddData(Vector2 tile_pos, TileMapLayer layer, int tile_set_source_id, 
-            Vector2I[] atlas_coord_array, Vector2 move_vector, CharacterBody2D obj, string resource_path)
+        /// <param name="position">global position of the object</param>
+        /// <param name="layer">tilemap layer of the objects graphics</param>
+        /// <param name="tile_set_source_id">source id for the tileset (usually 0)</param>
+        /// <param name="atlas_coord_array">array of atlast coordinate values for the graphic within the tileset</param>
+        /// <param name="dir_vector">direction that the object is moving -- station is new Vector2(0,0)</param>
+        /// <param name="obj">Character2D object for this object</param>
+        /// <param name="resource_path">location of the graphic image for this item</param>
+        public void Initialize(Vector2 position, TileMapLayer layer, int tile_set_source_id, 
+            Vector2I[] atlas_coord_array, Vector2 dir_vector, CharacterBody2D obj, 
+            string resource_path, int[] collision_layer_values, int[] collision_mask_values)
         {
-            var move_offset_unit_vector = move_vector.Normalized();
-
-            TilePos = tile_pos;
+            GlobalPosition = position;
             Layer = layer;
             TileSetSourceId = tile_set_source_id;
             AtlasCoordArray = atlas_coord_array;
-            MoveOffsetUnitVector = move_offset_unit_vector;
-            MoveDirectionUnitVector = move_offset_unit_vector;
+            DirectionVector = dir_vector;
             CharacterBodyObj = obj;
             AssetPath = resource_path;
-        }
 
+            DirectionUnitVector = dir_vector.Normalized();
+            Direction = Utilities.GetDirection_9WAY(DirectionUnitVector);
 
-        public Vector2I GetAtlasCoord_Random()
-        {
-            var rng = new RandomNumberGenerator();
-            var rand_number = rng.RandiRange(0, AtlasCoordArray.Length - 1);
-            return AtlasCoordArray[rand_number];
-        }
+            CollisionLayer = collision_layer_values;
+            CollisionMaskValues = collision_mask_values;
 
-        public Vector2I GetAtlasCoord_AtIndex(int index)
-        {
-            if (index >= 0 && index < AtlasCoordArray.Length)
+            GD.Print("unit vec: }" + DirectionUnitVector );
+
+            // set the velocity of the object
+            Velocity = Speed * DirectionUnitVector;
+            GD.Print("velocity: " + Velocity);
+
+            // Set the collision layers in GODOT
+            SetCollisionLayerValue(1, false); // turn off the default layer
+            foreach(int value in collision_layer_values)
             {
-                return AtlasCoordArray[index];
+                SetCollisionLayerValue(value, true); // and set our own
             }
-            else
+
+            // Set the collision mask in GODOT
+            SetCollisionMaskValue(1, false);  // turn of the defaults mask
+            foreach (int value in collision_mask_values)
             {
-                GD.Print("Error: index(" + index + ") out of bounds in GetAtlasCoord_AtIndex()");
-                return new Vector2I(0, 0);
+                SetCollisionMaskValue(value, true); // and set our own
             }
+
+            GD.Print("coll. layer: " + CollisionLayer + " bits:" + CollisionMaskValues);
         }
+
+
+        //public Vector2I GetAtlasCoord_Random()
+        //{
+        //    var rng = new RandomNumberGenerator();
+        //    var rand_number = rng.RandiRange(0, AtlasCoordArray.Length - 1);
+        //    return AtlasCoordArray[rand_number];
+        //}
+
+        //public Vector2I GetAtlasCoord_AtIndex(int index)
+        //{
+        //    if (index >= 0 && index < AtlasCoordArray.Length)
+        //    {
+        //        return AtlasCoordArray[index];
+        //    }
+        //    else
+        //    {
+        //        GD.Print("Error: index(" + index + ") out of bounds in GetAtlasCoord_AtIndex()");
+        //        return new Vector2I(0, 0);
+        //    }
+        //}
 
         public override void _Ready()
         {
@@ -121,7 +149,6 @@ namespace ProjectDuhamel.scripts
             var texture = new ImageTexture();
             texture.SetImage(loaded_image);
 
-
             // 2. create a new atlas texture
             var atlas_texture = new AtlasTexture();
 
@@ -136,27 +163,25 @@ namespace ProjectDuhamel.scripts
 
             // 5. set our sprite's texture to the new sub region image
             sprite.Texture = atlas_texture;
-
-            // set the start position
-            GlobalPosition = TilePos;
         }
-
-        //// called every frame/ 'delta' is the elapsed time since the previous frame
-        //public override void _Process(double delta)
-        //{
-        //    //// for random movement
-        //    //var rng = new RandomNumberGenerator();
-        //    //float rand_X = rng.RandfRange(-1.0f, 1.0f);
-        //    //float rand_Y = rng.RandfRange(-1.0f, 1.0f);
-        //    //GlobalPosition += new Vector2((float)(rand_X * speed * delta), (float)(rand_Y * speed * delta));
-
-        //    GlobalPosition += new Vector2((float)(MoveDirection.X * speed * delta), (float)(MoveDirection.Y * speed * delta));
-        //}
 
         // called every frame/ 'delta' is the elapsed time since the previous frame
         public override void _PhysicsProcess(double delta)
         {
-            GlobalPosition += new Vector2((float)(MoveDirectionUnitVector.X * speed * delta), (float)(MoveDirectionUnitVector.Y * speed * delta));
+            Velocity = new Vector2((float)(DirectionUnitVector.X * Speed), (float)(DirectionUnitVector.Y * Speed));
+
+            var collision = MoveAndCollide(Velocity * (float)delta);
+
+            if (collision != null)
+            {
+                GD.Print("RoomObject collided at " + GlobalPosition);
+
+                // if the room object is moving, then destroy it
+                if(Velocity > Vector2.Zero)
+                {
+                    QueueFree();
+                }
+            }
         }
     }
 }

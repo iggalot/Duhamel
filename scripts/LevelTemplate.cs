@@ -3,7 +3,46 @@ using ProjectDuhamel.models.spells;
 using ProjectDuhamel.scripts;
 using System;
 using System.Collections.Generic;
-using System.Net;
+
+
+/// <summary>
+/// Default values -- for multiples, add the bit values together and then call
+/// SetCollisionMaskValue to assign the bits
+/// SetCollisionLayerValue to assign the specific layer as indicated below
+/// LAYER ASSIGNMENTS      MASK BITS (used for SetCollisionMask function)
+/// 1. FLOORS               1
+/// 2. WALLS                2
+/// 3. ENVIRONMENT          4
+/// 4. SPELLS FRIENDLY      8
+/// 5. SPELLS HOSTILE       16
+/// 5. ITEMS                32
+/// 6. MONSTERS             64
+/// 7. PLAYER               128
+/// 
+/// 
+/// </summary>
+public enum CollisionLayerAssignments
+{
+    FLOORS = 1,
+    WALLS = 2,
+    ENVIRONMENT = 3,
+    SPELLS_FRIENDLY = 4,
+    SPELLS_HOSTILE = 5,
+    ITEMS = 6,
+    MONSTERS = 7,
+    PLAYER = 8
+}
+public enum CollisionMaskAssignments
+{
+    FLOORS = 1,
+    WALLS = 2,
+    ENVIRONMENT = 3,
+    SPELLS_FRIENDLY = 4,
+    SPELLS_HOSTILE = 5,
+    ITEMS = 6,
+    MONSTERS = 7,
+    PLAYER = 8
+}
 
 public partial class LevelTemplate : Node2D
 {
@@ -403,7 +442,6 @@ public partial class LevelTemplate : Node2D
     /// <param name="angle"></param>
     private void CreateBoundaryObject_Tiled(Node2D scene, Vector2 start, Vector2 end, WallDirections wall_dir)
     {
-
         Vector2 right;
         Vector2 left;
 
@@ -450,7 +488,6 @@ public partial class LevelTemplate : Node2D
         shape_width = Math.Abs(end_pt.X - start_pt.X);
         shape_height = Math.Abs(end_pt.Y - start_pt.Y);
 
-
         var shape = new RectangleShape2D();
         shape.Size = new Vector2((float)shape_width, shape_height);
 
@@ -463,9 +500,27 @@ public partial class LevelTemplate : Node2D
         char_body.AddChild(collision_shape);
         char_body.Position = (start_pt + end_pt) / 2;
         char_body.ZIndex = 0;
+        char_body.Name = "WallBoundary" + wall_dir;
+
+        // Set the collision layers
+        char_body.SetCollisionLayerValue(1, false);  // turn off the default
+        char_body.SetCollisionLayerValue((int)CollisionLayerAssignments.WALLS, true);  // assign to proper layer
+
+        char_body.SetCollisionMaskValue(1, false);  // turn off the default
+        char_body.SetCollisionMaskValue((int)CollisionLayerAssignments.WALLS, true);  // assign to proper layer
+        char_body.SetCollisionMaskValue((int)CollisionLayerAssignments.SPELLS_HOSTILE, true);  // assign to proper layer
+        char_body.SetCollisionMaskValue((int)CollisionLayerAssignments.SPELLS_FRIENDLY, true);  // assign to proper layer
+        char_body.SetCollisionMaskValue((int)CollisionLayerAssignments.ENVIRONMENT, true);  // assign to proper layer
+        char_body.SetCollisionMaskValue((int)CollisionLayerAssignments.ITEMS, true);  // assign to proper layer
+        char_body.SetCollisionMaskValue((int)CollisionLayerAssignments.MONSTERS, true);  // assign to proper layer
+        char_body.SetCollisionMaskValue((int)CollisionLayerAssignments.PLAYER, true);  // assign to proper layer
+
+
 
         // add the boundary object to the intended scene
         scene.AddChild(char_body);
+
+
     }
 
     // Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -508,8 +563,6 @@ public partial class LevelTemplate : Node2D
 
     private void ShootSpell(Player player)
     {
-        Vector2I[] effect_vec = spell_firebolt_effects_tiles;
-
         var rng = new RandomNumberGenerator();
         var rand_number = rng.RandiRange(0, 5);
         SpellIdentifiers spell_id;
@@ -546,15 +599,41 @@ public partial class LevelTemplate : Node2D
         // Instantiate the scene object and then add the data from the spell dictionary --
         // this is needed because the room scene is instantiated through the parameterless constructor.
         RoomObjects new_room = RoomObjectScene.Instantiate() as RoomObjects;
-        new_room.AddData(
+        // which item type is this?
+        int[] layer_bits = { (int)CollisionLayerAssignments.SPELLS_FRIENDLY };
+        // which items can it hit?
+        int[] mask_bits = {
+            (int)(CollisionMaskAssignments.WALLS),
+            (int)(CollisionMaskAssignments.ITEMS),
+            (int)(CollisionMaskAssignments.MONSTERS)
+        };
+
+        new_room.Initialize(
             player.GlobalPosition,
             new_spell.GraphicsLayer,
             new_spell.TileSetSourceId,
             new_spell.AtlasCoordArray,
-            player.FacingUnitVector,
+            player.DirectionVector,
             new_spell.CharacterBodyObj,
-            new_spell.AssetPath
-            );
+            new_spell.AssetPath,
+            layer_bits,
+            mask_bits
+
+        /// LAYER ASSIGNMENTS      MASK BITS (used for SetCollisionMask function)
+        /// 1. FLOORS               1
+        /// 2. WALLS                2
+        /// 3. ENVIRONMENT          3
+        /// 4. SPELLS FRIENDLY      4
+        /// 5. SPELLS HOSTILE       5
+        /// 5. ITEMS                6
+        /// 6. MONSTERS             7
+        /// 7. PLAYER               8
+        );
+
+        GD.Print("spell: " + spell_id.ToString());
+        GD.Print("global position of spell: " + new_room.GlobalPosition.ToString());
+        GD.Print("direction vector of spell: " + new_room.DirectionVector.ToString());
+        
 
         Node2D Rooms = GetNode("RoomObjects") as Node2D;
         Rooms.AddChild(new_room);
