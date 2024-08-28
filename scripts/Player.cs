@@ -29,6 +29,7 @@ public partial class Player : CharacterBody2D
         if (Input.IsActionJustPressed("left_click"))
         {
             IsMoving = true;
+
             // assign our target destination click
             TargetDestinationPosition = GetGlobalMousePosition();
 
@@ -36,10 +37,12 @@ public partial class Player : CharacterBody2D
             DirectionVector = GlobalPosition.DirectionTo(TargetDestinationPosition);
             DirectionUnitVector = DirectionVector.Normalized();
             FacingUnitVector = DirectionVector.Normalized();
+            Direction = Utilities.GetDirection_9WAY(DirectionVector);
+            
+            // ser our velocity
             Velocity = DirectionVector * _speed;
 
             GD.Print("left click DV: " + DirectionVector);
-
         }
 
         if (Input.IsActionJustPressed("right_click"))
@@ -59,12 +62,16 @@ public partial class Player : CharacterBody2D
 
     public override void _Ready()
     {
-//        GlobalPosition = new Vector2(20, 20);  // set the player position inside the room slightly
+        GlobalPosition = new Vector2(50, 20);
+
+        // set our initial player vectors
         DirectionVector = new Vector2(0, 0);
-        DirectionUnitVector = new Vector2(0, 0);
+        DirectionUnitVector = DirectionVector.Normalized();
         TargetDestinationPosition = GlobalPosition;
+        FacingUnitVector =DirectionVector.Normalized();
         Direction = Utilities.Directions.DIR_NONE;
 
+        // Set the collision layers and masks for this player in Godot
         SetCollisionLayerValue(1, false);  // turn off the default
         SetCollisionLayerValue((int)CollisionLayerAssignments.PLAYER, true);  // assign to proper layer
 
