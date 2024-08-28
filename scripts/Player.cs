@@ -6,16 +6,18 @@ public partial class Player : CharacterBody2D
 {
 
 
-	public const float _speed = 200.0f;
+	public const float _speed = 50.0f;
 
     private Vector2 TargetDestinationPosition = new Vector2();
 
     [Export]
     private bool HasCollided = false;
     [Export]
-    private bool IsAttacking = false;
+    public bool IsAttacking = false;
     [Export]
-    private bool IsMoving = true; // default state is true
+    public bool IsMoving = true; // default state is true
+    // for handling funky collision checking on first start
+    public bool IsFirstLoad = true;
 
     public Utilities.Directions Direction { get; set; } = Utilities.Directions.DIR_NONE;
     public Vector2 DirectionUnitVector { get; set; } = new Vector2();
@@ -28,17 +30,18 @@ public partial class Player : CharacterBody2D
 	{
         if (Input.IsActionJustPressed("left_click"))
         {
-            IsMoving = true;
-            // assign our target destination click
-            TargetDestinationPosition = GetGlobalMousePosition();
+            //// assign our target destination click
+            //TargetDestinationPosition = GetGlobalMousePosition();
+            //if(TargetDestinationPosition == GlobalPosition)
+            //{
+            //    IsMoving = false;
+            //} else
+            //{
+            //    IsMoving = true;
+            //}
 
-            // determine the direction and velocity from current player position to the target destination
-            DirectionVector = GlobalPosition.DirectionTo(TargetDestinationPosition);
-            DirectionUnitVector = DirectionVector.Normalized();
-            FacingUnitVector = DirectionVector.Normalized();
-            Velocity = DirectionVector * _speed;
-
-            GD.Print("left click DV: " + DirectionVector);
+            ////Velocity = DirectionVector * _speed;
+            //GD.Print("left click DV: " + TargetDestinationPosition);
 
         }
 
@@ -55,46 +58,73 @@ public partial class Player : CharacterBody2D
             IsAttacking = false;
             GD.Print("middle click");
         }
+
+        return;
     }
 
     public override void _Ready()
     {
-//        GlobalPosition = new Vector2(20, 20);  // set the player position inside the room slightly
-        DirectionUnitVector = new Vector2(0, 0);
-        Direction = Utilities.Directions.DIR_NONE;
+////        GlobalPosition = new Vector2(20, 20);  // set the player position inside the room slightly
+//        DirectionVector = new Vector2(0, 0);
+//        DirectionUnitVector = new Vector2(0, 0);
+//        Direction = Utilities.Directions.DIR_NONE;
+//        IsMoving = false;
+//        IsAttacking = false;
 
-        SetCollisionLayerValue(1, false);  // turn off the default
-        SetCollisionLayerValue((int)CollisionLayerAssignments.PLAYER, true);  // assign to proper layer
+//        // set out target to our current location
+//        TargetDestinationPosition = GlobalPosition;
 
-        SetCollisionMaskValue(1, false);  // turn off the default
-        SetCollisionMaskValue((int)CollisionLayerAssignments.WALLS, true);  // assign to proper layer
-        SetCollisionMaskValue((int)CollisionLayerAssignments.SPELLS_HOSTILE, true);  // assign to proper layer
-        SetCollisionMaskValue((int)CollisionLayerAssignments.ENVIRONMENT, true);  // assign to proper layer
-        SetCollisionMaskValue((int)CollisionLayerAssignments.ITEMS, true);  // assign to proper layer
-        SetCollisionMaskValue((int)CollisionLayerAssignments.MONSTERS, true);  // assign to proper layer
+    //    SetCollisionLayerValue(1, false);  // turn off the default
+    //    SetCollisionLayerValue((int)CollisionLayerAssignments.PLAYER, true);  // assign to proper layer
 
+    //    SetCollisionMaskValue(1, false);  // turn off the default
+    //    SetCollisionMaskValue((int)CollisionLayerAssignments.WALLS, true);  // assign to proper layer
+    //    SetCollisionMaskValue((int)CollisionLayerAssignments.SPELLS_HOSTILE, true);  // assign to proper layer
+    //    SetCollisionMaskValue((int)CollisionLayerAssignments.ENVIRONMENT, true);  // assign to proper layer
+    //    SetCollisionMaskValue((int)CollisionLayerAssignments.ITEMS, true);  // assign to proper layer
+    //    SetCollisionMaskValue((int)CollisionLayerAssignments.MONSTERS, true);  // assign to proper layer
     }
+
     public override void _PhysicsProcess(double delta)
 	{
+        // If its the first cycle through, character may have some funky updates
+        // so shortcut out.
+        if (IsFirstLoad is true)
+        {
+            IsFirstLoad = false;
+            return;
+        }
+
         // check for collisions with enemies or objects nearby, or if we are attacking something
         // or if we should move
         GetInput();
-        // update the direction of our char.
-        Direction = Utilities.GetDirection_9WAY(DirectionVector);
 
-        // compute the current distance of the player from the target destination point
-        var distance = TargetDestinationPosition.DistanceSquaredTo(GlobalPosition);
+        //        UpdateDirectionVectors();
 
-        var collision = MoveAndCollide(Velocity * (float)delta);
-        if(collision != null)
-        {
-            GD.Print("Player collided at " + GlobalPosition);
-            Velocity = new Vector2(0, 0);
-            DirectionVector = new Vector2(0,0);
-            DirectionUnitVector = DirectionVector.Normalized();
-            TargetDestinationPosition = GlobalPosition;
+        Velocity = new Vector2(50, 50);
 
-        }
+        MoveAndSlide();
+
+        ////Direction = Utilities.GetDirection_9WAY(DirectionVector);
+        ////Velocity = _speed * DirectionUnitVector;
+
+        //GD.Print("Before MoveAndCollide");
+        //GD.Print("target dest: " + TargetDestinationPosition);
+        //GD.Print("directon vector: " + DirectionVector);
+        //GD.Print("direction unit vector: " + DirectionUnitVector);
+        //GD.Print("velocity: " + Velocity);
+
+        ////// compute the current distance of the player from the target destination point
+        ////var distance = TargetDestinationPosition.DistanceSquaredTo(GlobalPosition);
+
+        //var increment = Velocity * (float)delta;
+        //GD.Print("increment: " + increment);
+        //var collision = MoveAndCollide((Velocity * (float)delta));
+
+
+
+
+
 
         //// MOUSE CLICK MOVEMENT
         ////
@@ -117,34 +147,29 @@ public partial class Player : CharacterBody2D
         //    Direction = Directions.DIR_NONE;
         //}
 
-        //// COLLISION CHECKS
-        ////
-        //// check if we collided with something...if so...signal that we've collided so the next iteration zeroes the values.
-        //if(collision_info != null)
-        //{
-        //    GD.Print("collided");
-        //    HasCollided = true;
 
-        //    // Zero out all the movement variables except the facing unit vector
-        //    TargetDestinationPosition = GlobalPosition;
-        //    Velocity = new Vector2(0, 0);
-        //    DirectionUnitVector = new Vector2(0, 0);
-        //    DirectionVector = new Vector2(0, 0);
-        //    Direction = Directions.DIR_NONE;
 
-        //} else
-        //{
-        //    //GD.Print("no collision");
+        //Direction = Utilities.GetDirection_9WAY(DirectionVector);
 
-        //    HasCollided = false;
-        //}
-
-        Direction = Utilities.GetDirection_9WAY(DirectionVector);
-
-        // load the arrow graphic
-        var direction_arrow_sprites = GetNode<Sprite2D>("DirectionArrowSprite");
-        direction_arrow_sprites.RegionRect = new Rect2((int)Direction * 16, 0, 16, 16);
+        //// load the arrow graphic
+        //var direction_arrow_sprites = GetNode<Sprite2D>("DirectionArrowSprite");
+        //direction_arrow_sprites.RegionRect = new Rect2((int)Direction * 16, 0, 16, 16);
     }
 
+    //private void UpdateDirectionVectors()
+    //{
+    //    // don't update on the initial run
+    //    if (IsFirstLoad is true)
+    //        return;
 
+    //    if(IsMoving is false)
+    //    {
+    //        TargetDestinationPosition = GlobalPosition;
+    //    }
+    //    DirectionVector = TargetDestinationPosition - GlobalPosition;
+    //    DirectionUnitVector = DirectionVector.Normalized();
+    //    // update the direction enum of our char.
+    //    Direction = Utilities.GetDirection_9WAY(DirectionVector);
+
+    //}
 }

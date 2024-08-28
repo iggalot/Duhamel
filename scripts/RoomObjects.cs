@@ -10,7 +10,8 @@ namespace ProjectDuhamel.scripts
         private Vector2 unit_vector;
         private float rotation = 0;
 
-        public Vector2 TilePos { get; set; } 
+        public Vector2 CurrentLocation { get; set; }
+        public Vector2 PreviousLocation { get; set; }
         public TileMapLayer Layer { get; set; } = new TileMapLayer();
         public int TileSetSourceId { get; set; } = 0;
         public Vector2I[] AtlasCoordArray { get; set; } = null;
@@ -23,7 +24,9 @@ namespace ProjectDuhamel.scripts
         public Vector2 DirectionVector { get; set; }
 
         // the static body object (with collision and image) tied into it
-        public CharacterBody2D CharacterBodyObj { get; set; }
+        //public CharacterBody2D CharacterBodyObj { get; set; }
+
+        public RectangleShape2D BodyShape { get; set; } = new RectangleShape2D();
 
         // the location of the tileset image
         public string AssetPath { get; set; } = string.Empty;
@@ -60,16 +63,19 @@ namespace ProjectDuhamel.scripts
         /// <param name="dir_vector">direction that the object is moving -- station is new Vector2(0,0)</param>
         /// <param name="obj">Character2D object for this object</param>
         /// <param name="resource_path">location of the graphic image for this item</param>
-        public void Initialize(Vector2 position, TileMapLayer layer, int tile_set_source_id, 
-            Vector2I[] atlas_coord_array, Vector2 dir_vector, CharacterBody2D obj, 
+        public void Initialize(Vector2 position, TileMapLayer layer, int tile_set_source_id,
+            Vector2I[] atlas_coord_array, Vector2 dir_vector, Vector2 initial_vel_vec,
+            RectangleShape2D shape,
             string resource_path, int[] collision_layer_values, int[] collision_mask_values)
         {
-            GlobalPosition = position;
+
+            CurrentLocation = position;
+            PreviousLocation = position;
             Layer = layer;
             TileSetSourceId = tile_set_source_id;
             AtlasCoordArray = atlas_coord_array;
             DirectionVector = dir_vector;
-            CharacterBodyObj = obj;
+            BodyShape = shape;
             AssetPath = resource_path;
 
             DirectionUnitVector = dir_vector.Normalized();
@@ -78,11 +84,18 @@ namespace ProjectDuhamel.scripts
             CollisionLayer = collision_layer_values;
             CollisionMaskValues = collision_mask_values;
 
-            GD.Print("unit vec: }" + DirectionUnitVector );
+            //GD.Print("unit vec: }" + DirectionUnitVector );
+
+            // set the initial location of the object in global coordinates
+            GlobalPosition = position;
+            GD.Print("loc: " + GlobalPosition);
+
+            Velocity = initial_vel_vec;  // set an initial velocity
+            GD.Print("vel: " + Velocity);
 
             // set the velocity of the object
-            Velocity = Speed * DirectionUnitVector;
-            GD.Print("velocity: " + Velocity);
+            //Velocity = Speed * DirectionUnitVector;
+            //GD.Print("velocity: " + Velocity);
 
             // Set the collision layers in GODOT
             SetCollisionLayerValue(1, false); // turn off the default layer
@@ -99,6 +112,10 @@ namespace ProjectDuhamel.scripts
             }
 
             GD.Print("coll. layer: " + CollisionLayer + " bits:" + CollisionMaskValues);
+
+            ////assign the character body object to the item that was just created.
+            var collision_body = GetNode<CollisionShape2D>("CollisionShape2D");
+            collision_body.Shape = BodyShape;
         }
 
 
@@ -168,20 +185,26 @@ namespace ProjectDuhamel.scripts
         // called every frame/ 'delta' is the elapsed time since the previous frame
         public override void _PhysicsProcess(double delta)
         {
-            Velocity = new Vector2((float)(DirectionUnitVector.X * Speed), (float)(DirectionUnitVector.Y * Speed));
+            GlobalPosition = PreviousLocation;
 
             var collision = MoveAndCollide(Velocity * (float)delta);
 
             if (collision != null)
             {
-                GD.Print("RoomObject collided at " + GlobalPosition);
+                //GD.Print("RoomObject collided at " + GlobalPosition + " with object " +  collision);
 
-                // if the room object is moving, then destroy it
-                if(Velocity > Vector2.Zero)
-                {
-                    QueueFree();
-                }
+                // move back to our previous location and stop its movement
+                CurrentLocation = PreviousLocation;
+                Velocity = new Vector2(0, 0);
+                //// if the room object is moving, then destroy it
+                //if(Velocity > Vector2.Zero)
+                //{
+                //    QueueFree();
+                //}
             }
+
+            // store our location
+            PreviousLocation = CurrentLocation;
         }
     }
 }

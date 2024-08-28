@@ -12,12 +12,12 @@ using System.Collections.Generic;
 /// LAYER ASSIGNMENTS      MASK BITS (used for SetCollisionMask function)
 /// 1. FLOORS               1
 /// 2. WALLS                2
-/// 3. ENVIRONMENT          4
-/// 4. SPELLS FRIENDLY      8
-/// 5. SPELLS HOSTILE       16
-/// 5. ITEMS                32
-/// 6. MONSTERS             64
-/// 7. PLAYER               128
+/// 3. ENVIRONMENT          3
+/// 4. SPELLS FRIENDLY      4
+/// 5. SPELLS HOSTILE       5
+/// 5. ITEMS                6
+/// 6. MONSTERS             7
+/// 7. PLAYER               8
 /// 
 /// 
 /// </summary>
@@ -51,7 +51,6 @@ public partial class LevelTemplate : Node2D
 
 
     PackedScene RoomObjectScene = GD.Load<PackedScene>("res://scenes/room_object.tscn");
-
 
     public enum WallDirections
     {
@@ -419,18 +418,18 @@ public partial class LevelTemplate : Node2D
 
 
 
-        // top wall
-        CreateBoundaryObject_Tiled(this, tiled_wallcorner_UpperLeft,
-            tiled_wallcorner_UpperRight, WallDirections.Top);
-        // right wall
-        CreateBoundaryObject_Tiled(this, tiled_wallcorner_UpperRight,
-            tiled_wallcorner_LowerRight, WallDirections.Right);
-        // bottom wall
-        CreateBoundaryObject_Tiled(this, tiled_wallcorner_LowerLeft,
-            tiled_wallcorner_LowerRight, WallDirections.Bottom);
-        // left wall
-        CreateBoundaryObject_Tiled(this, tiled_wallcorner_UpperLeft,
-            tiled_wallcorner_LowerLeft, WallDirections.Left);
+        //// top wall
+        //CreateBoundaryObject_Tiled(this, tiled_wallcorner_UpperLeft,
+        //    tiled_wallcorner_UpperRight, WallDirections.Top);
+        //// right wall
+        //CreateBoundaryObject_Tiled(this, tiled_wallcorner_UpperRight,
+        //    tiled_wallcorner_LowerRight, WallDirections.Right);
+        //// bottom wall
+        //CreateBoundaryObject_Tiled(this, tiled_wallcorner_LowerLeft,
+        //    tiled_wallcorner_LowerRight, WallDirections.Bottom);
+        //// left wall
+        //CreateBoundaryObject_Tiled(this, tiled_wallcorner_UpperLeft,
+        //    tiled_wallcorner_LowerLeft, WallDirections.Left);
     }
 
     /// <summary>
@@ -502,18 +501,18 @@ public partial class LevelTemplate : Node2D
         char_body.ZIndex = 0;
         char_body.Name = "WallBoundary" + wall_dir;
 
-        // Set the collision layers
-        char_body.SetCollisionLayerValue(1, false);  // turn off the default
-        char_body.SetCollisionLayerValue((int)CollisionLayerAssignments.WALLS, true);  // assign to proper layer
+        //// Set the collision layers
+        //char_body.SetCollisionLayerValue(1, false);  // turn off the default
+        //char_body.SetCollisionLayerValue((int)CollisionLayerAssignments.WALLS, true);  // assign to proper layer
 
-        char_body.SetCollisionMaskValue(1, false);  // turn off the default
-        char_body.SetCollisionMaskValue((int)CollisionLayerAssignments.WALLS, true);  // assign to proper layer
-        char_body.SetCollisionMaskValue((int)CollisionLayerAssignments.SPELLS_HOSTILE, true);  // assign to proper layer
-        char_body.SetCollisionMaskValue((int)CollisionLayerAssignments.SPELLS_FRIENDLY, true);  // assign to proper layer
-        char_body.SetCollisionMaskValue((int)CollisionLayerAssignments.ENVIRONMENT, true);  // assign to proper layer
-        char_body.SetCollisionMaskValue((int)CollisionLayerAssignments.ITEMS, true);  // assign to proper layer
-        char_body.SetCollisionMaskValue((int)CollisionLayerAssignments.MONSTERS, true);  // assign to proper layer
-        char_body.SetCollisionMaskValue((int)CollisionLayerAssignments.PLAYER, true);  // assign to proper layer
+        //char_body.SetCollisionMaskValue(1, false);  // turn off the default
+        //char_body.SetCollisionMaskValue((int)CollisionLayerAssignments.WALLS, true);  // assign to proper layer
+        //char_body.SetCollisionMaskValue((int)CollisionLayerAssignments.SPELLS_HOSTILE, true);  // assign to proper layer
+        //char_body.SetCollisionMaskValue((int)CollisionLayerAssignments.SPELLS_FRIENDLY, true);  // assign to proper layer
+        //char_body.SetCollisionMaskValue((int)CollisionLayerAssignments.ENVIRONMENT, true);  // assign to proper layer
+        //char_body.SetCollisionMaskValue((int)CollisionLayerAssignments.ITEMS, true);  // assign to proper layer
+        //char_body.SetCollisionMaskValue((int)CollisionLayerAssignments.MONSTERS, true);  // assign to proper layer
+        //char_body.SetCollisionMaskValue((int)CollisionLayerAssignments.PLAYER, true);  // assign to proper layer
 
 
 
@@ -527,10 +526,11 @@ public partial class LevelTemplate : Node2D
     public override void _Process(double delta)
 	{
         Player player = GetNode<CharacterBody2D>("Player") as Player;
+        player.GlobalPosition = new Vector2(50, 20);
         
         if (Input.IsActionJustPressed("shoot"))
         {
-            ShootSpell(player);
+ //           ShootSpell(player);
         }
     }
 
@@ -608,13 +608,29 @@ public partial class LevelTemplate : Node2D
             (int)(CollisionMaskAssignments.MONSTERS)
         };
 
+        var spell_pos = player.GlobalPosition;
+
+        Vector2 initial_vel_vec = new Vector2(0, 0);
+        if (player.IsMoving)
+        {
+            initial_vel_vec = player.DirectionUnitVector * new_spell.Speed;
+            GD.Print("player is moving");
+        } else
+        {
+            initial_vel_vec = new Vector2(20, 0);  // default velocity
+            GD.Print("player is not moving - using defualt");
+        }
+
+        GD.Print("initial velocity: " + initial_vel_vec.ToString());
+
         new_room.Initialize(
-            player.GlobalPosition,
+            spell_pos,
             new_spell.GraphicsLayer,
             new_spell.TileSetSourceId,
             new_spell.AtlasCoordArray,
             player.DirectionVector,
-            new_spell.CharacterBodyObj,
+            initial_vel_vec,
+            new_spell.SpellShape,
             new_spell.AssetPath,
             layer_bits,
             mask_bits
@@ -636,6 +652,7 @@ public partial class LevelTemplate : Node2D
         
 
         Node2D Rooms = GetNode("RoomObjects") as Node2D;
+        new_room.Name = "item_" + spell_id.ToString();
         Rooms.AddChild(new_room);
     }
 }
