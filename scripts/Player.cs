@@ -46,13 +46,13 @@ public partial class Player : CharacterBody2D
         {
             IsMoving = false;
             GD.Print("right click");
-            IsAttacking = true;
+            //IsAttacking = true;
         }
 
         if (Input.IsActionJustPressed("middle_click"))
         {
             IsMoving = false;
-            IsAttacking = false;
+            //IsAttacking = false;
             GD.Print("middle click");
         }
     }
@@ -60,7 +60,9 @@ public partial class Player : CharacterBody2D
     public override void _Ready()
     {
 //        GlobalPosition = new Vector2(20, 20);  // set the player position inside the room slightly
+        DirectionVector = new Vector2(0, 0);
         DirectionUnitVector = new Vector2(0, 0);
+        TargetDestinationPosition = GlobalPosition;
         Direction = Utilities.Directions.DIR_NONE;
 
         SetCollisionLayerValue(1, false);  // turn off the default
@@ -74,6 +76,7 @@ public partial class Player : CharacterBody2D
         SetCollisionMaskValue((int)CollisionLayerAssignments.MONSTERS, true);  // assign to proper layer
 
     }
+
     public override void _PhysicsProcess(double delta)
 	{
         // check for collisions with enemies or objects nearby, or if we are attacking something
@@ -83,11 +86,30 @@ public partial class Player : CharacterBody2D
         Direction = Utilities.GetDirection_9WAY(DirectionVector);
 
         // compute the current distance of the player from the target destination point
-        var distance = TargetDestinationPosition.DistanceSquaredTo(GlobalPosition);
+        var distance = GlobalPosition.DistanceSquaredTo(TargetDestinationPosition);
 
-        var collision = MoveAndCollide(Velocity * (float)delta);
-        if(collision != null)
+        // var collision = MoveAndCollide(Velocity * (float)delta);
+
+        KinematicCollision2D collision_info = null;
+
+        if (Math.Sqrt(distance) > 3)
         {
+            // continue moving the character  for this frame
+            collision_info = MoveAndCollide(Velocity * (float)delta);
+            IsMoving = true;
+        } else
+        {
+            GD.Print("Player is at target destination at " + GlobalPosition);
+            IsMoving = false;
+            Velocity = new Vector2(0, 0);
+            DirectionVector = new Vector2(0, 0);
+            DirectionUnitVector = DirectionVector.Normalized();
+            TargetDestinationPosition = GlobalPosition;
+        }
+
+        if(collision_info != null)
+        {
+            IsMoving = false;
             GD.Print("Player collided at " + GlobalPosition);
             Velocity = new Vector2(0, 0);
             DirectionVector = new Vector2(0,0);
