@@ -1,6 +1,7 @@
 ﻿using Godot;
 using ProjectDuhamel.scripts;
 using System.Collections.Generic;
+using System.Drawing;
 
 namespace ProjectDuhamel.models.spells
 {
@@ -9,7 +10,11 @@ namespace ProjectDuhamel.models.spells
     public partial class BaseSpellObjectGraphics : RoomObjects
     {
         public string SpellName { get; set; } = "Unnamed Spell";
+
         public SpellIdentifiers ID { get; set; } = SpellIdentifiers.SPELL_UNDEFINED;
+        public float SpellSpeed { get; set; } = 40.0f;
+
+        public Size SpellSize { get; set; } = new Size(5, 5);
 
         /// <summary>
         /// The shape of the CollisionShape2D object for this object
@@ -29,18 +34,20 @@ namespace ProjectDuhamel.models.spells
                 
         }
 
-        public BaseSpellObjectGraphics(string spell_name, SpellIdentifiers spell_id, string asset_path, TileMapLayer layer, 
+        public BaseSpellObjectGraphics(string spell_name, float spell_speed, Size spell_size, SpellIdentifiers spell_id, string asset_path, TileMapLayer layer, 
             int tile_set_source_id, Vector2I[] atlas_coord)
         {
-            SpellName = spell_name;
-            ID = spell_id;
+            this.SpellName = spell_name;
+            this.SpellSpeed = spell_speed;
+            this.SpellSize = spell_size;
+            this.ID = spell_id;
 
-            AssetPath = asset_path;
-            GraphicsLayer = layer;
-            TileSetSourceId = tile_set_source_id;
-            AtlasCoordArray = atlas_coord;
+            this.AssetPath = asset_path;
+            this.GraphicsLayer = layer;
+            this.TileSetSourceId = tile_set_source_id;
+            this.AtlasCoordArray = atlas_coord;
 
-            SpellShape = CreateSpellObject();
+            this.SpellShape = CreateSpellObject();
         }
 
         /// <summary>
@@ -52,21 +59,7 @@ namespace ProjectDuhamel.models.spells
         {
             // create the node for the object
             var spell_shape = new RectangleShape2D();
-            spell_shape.Size = new Vector2((float)8, 8);
-
-
-            //// For historic purposes -- how to manually create a character body 2D from code
-            //// remember to assign a shape2D object to the collision objects
-            
-            //// create a new collision shape
-            //CollisionShape2D collision_shape = new CollisionShape2D();
-            //collision_shape.Shape = shape;
-            //collision_shape.Rotation = 0;
-
-            //CharacterBody2D char_body = new CharacterBody2D();
-            //char_body.AddChild(collision_shape);
-            //char_body.Position = new Vector2(0, 0);
-            //char_body.ZIndex = 3;
+            spell_shape.Size = new Vector2((float)SpellSize.Width, SpellSize.Height);
 
             return spell_shape;
         }

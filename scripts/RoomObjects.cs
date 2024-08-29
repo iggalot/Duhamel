@@ -1,16 +1,18 @@
 ﻿using Godot;
+using System;
 
 namespace ProjectDuhamel.scripts
 {
     public partial class RoomObjects : CharacterBody2D
     {
         // The speed of the object
-        public float Speed { get; set; } = 50;
+        public float RoomObjectSpeed { get; set; }
+        public float RoomObjectRotationAngle { get; set; } = 0.0f;
+        public Texture2D RoomObjectTexture { get; set; } = new Texture2D();
 
-        private Vector2 unit_vector;
-        private float rotation = 0;
+        public Vector2 CurrentPosition { get; set; } = new Vector2();
+        public Vector2 LastPosition { get; set; } = new Vector2();
 
-        public Vector2 TilePos { get; set; } 
         public TileMapLayer Layer { get; set; } = new TileMapLayer();
         public int TileSetSourceId { get; set; } = 0;
         public Vector2I[] AtlasCoordArray { get; set; } = null;
@@ -24,6 +26,7 @@ namespace ProjectDuhamel.scripts
 
         // the static body object (with collision and image) tied into it
         public CharacterBody2D CharacterBodyObj { get; set; }
+        public RectangleShape2D BodyShape { get; set; } = new RectangleShape2D();
 
         // the location of the tileset image
         public string AssetPath { get; set; } = string.Empty;
@@ -60,29 +63,43 @@ namespace ProjectDuhamel.scripts
         /// <param name="dir_vector">direction that the object is moving -- station is new Vector2(0,0)</param>
         /// <param name="obj">Character2D object for this object</param>
         /// <param name="resource_path">location of the graphic image for this item</param>
-        public void Initialize(Vector2 position, TileMapLayer layer, int tile_set_source_id, 
-            Vector2I[] atlas_coord_array, Vector2 dir_vector, CharacterBody2D obj, 
+        public void Initialize(string name,Vector2 position, float speed, TileMapLayer layer, int tile_set_source_id, 
+            Vector2I[] atlas_coord_array, Vector2 dir_vector, RectangleShape2D shape, 
             string resource_path, int[] collision_layer_values, int[] collision_mask_values)
         {
-            GlobalPosition = position;
+            this.Name = name;
+            this.RoomObjectSpeed = speed;
+            this.Position = position;
+            //CurrentPosition = position;
+            //LastPosition = position;
+
+            // TODO:  This needs to be removed and decoupled from this code....as it's spell and graphic specific.  Need ideas for how to do this conveniently.
+            // graphics information
             Layer = layer;
             TileSetSourceId = tile_set_source_id;
             AtlasCoordArray = atlas_coord_array;
-            DirectionVector = dir_vector;
-            CharacterBodyObj = obj;
             AssetPath = resource_path;
 
-            DirectionUnitVector = dir_vector.Normalized();
-            Direction = Utilities.GetDirection_9WAY(DirectionUnitVector);
+            // Set the collision body shape
+            BodyShape = shape;
+            CollisionShape2D collision_shape = GetNode<CollisionShape2D>("CollisionShape2D");
+            collision_shape.Shape = shape;
 
+            // set the collision layers in GODOT
             CollisionLayer = collision_layer_values;
             CollisionMaskValues = collision_mask_values;
 
-            GD.Print("unit vec: }" + DirectionUnitVector );
+            // set the vectors of the object
+            DirectionVector = dir_vector;
+            DirectionUnitVector = dir_vector.Normalized();
+            Direction = Utilities.GetDirection_9WAY(DirectionUnitVector);
+
+            // determine the angle made by the unit vector and apply it to the rotation of this Node object in Godot.
+            RoomObjectRotationAngle = (float)Math.Atan2(dir_vector.Y, dir_vector.X);
+            this.Rotation = RoomObjectRotationAngle;
 
             // set the velocity of the object
-            Velocity = Speed * DirectionUnitVector;
-            GD.Print("velocity: " + Velocity);
+            Velocity = RoomObjectSpeed * DirectionUnitVector;
 
             // Set the collision layers in GODOT
             SetCollisionLayerValue(1, false); // turn off the default layer
@@ -97,8 +114,6 @@ namespace ProjectDuhamel.scripts
             {
                 SetCollisionMaskValue(value, true); // and set our own
             }
-
-            GD.Print("coll. layer: " + CollisionLayer + " bits:" + CollisionMaskValues);
         }
 
 
@@ -126,6 +141,8 @@ namespace ProjectDuhamel.scripts
         {
             string path = AssetPath;
             Sprite2D sprite = GetNode<Sprite2D>("RoomObjectSprite");
+
+            //Position = GlobalPosition;
 
             // TODO:  This should be abstracted out as a utility function for loading the subregion of an image from an atlas
             // 1. load the image from file and create a texture from it
@@ -160,27 +177,25 @@ namespace ProjectDuhamel.scripts
             var rng = new RandomNumberGenerator();
             var rand_number = rng.RandiRange(0, AtlasCoordArray.Length - 1);
             atlas_texture.Region = new Rect2(AtlasCoordArray[rand_number].X * 16, AtlasCoordArray[rand_number].Y * 16, 16, 16);
-
+            RoomObjectTexture = atlas_texture;
             // 5. set our sprite's texture to the new sub region image
-            sprite.Texture = atlas_texture;
+            sprite.Texture = RoomObjectTexture;
         }
 
         // called every frame/ 'delta' is the elapsed time since the previous frame
         public override void _PhysicsProcess(double delta)
         {
-            Velocity = new Vector2((float)(DirectionUnitVector.X * Speed), (float)(DirectionUnitVector.Y * Speed));
+            this.Rotation = RoomObjectRotationAngle;
+
+            // Update the velocity just in case....
+            Velocity = RoomObjectSpeed * DirectionUnitVector;
 
             var collision = MoveAndCollide(Velocity * (float)delta);
 
             if (collision != null)
             {
                 GD.Print("RoomObject collided at " + GlobalPosition);
-
-                // if the room object is moving, then destroy it
-                if(Velocity > Vector2.Zero)
-                {
-                    QueueFree();
-                }
+                this.QueueFree();
             }
         }
     }

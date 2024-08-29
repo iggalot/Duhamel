@@ -106,7 +106,7 @@ public partial class Player : CharacterBody2D
             IsMoving = true;
         } else
         {
-            GD.Print("Player is at target destination at " + GlobalPosition);
+            //GD.Print("Player is at target destination at " + GlobalPosition);
             IsMoving = false;
             Velocity = new Vector2(0, 0);
             DirectionVector = new Vector2(0, 0);
