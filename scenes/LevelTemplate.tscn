@@ -319,3 +319,11 @@ region_enabled = true
 region_rect = Rect2(0, 0, 16, 16)
 
 [node name="RoomObjects" type="Node2D" parent="."]
+
+[node name="MonsterObjects" type="Node2D" parent="."]
+
+[node name="MonsterSpawnTimer" type="Timer" parent="."]
+wait_time = 3.0
+autostart = true
+
+[connection signal="timeout" from="MonsterSpawnTimer" to="." method="_on_monster_spawn_timer_timeout"]

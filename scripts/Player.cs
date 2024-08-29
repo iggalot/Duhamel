@@ -1,30 +1,29 @@
 using Godot;
+using ProjectDuhamel.scripts;
 using System;
 using static Utilities;
 
 public partial class Player : CharacterBody2D
 {
-
-
 	public const float _speed = 200.0f;
+    public const int _damage = 3;
 
     private Vector2 TargetDestinationPosition = new Vector2();
 
-    [Export]
     private bool HasCollided = false;
-    [Export]
     private bool IsAttacking = false;
-    [Export]
     private bool IsMoving = true; // default state is true
 
+    /// <summary>
+    /// Directional information for the player
+    /// </summary>
     public Utilities.Directions Direction { get; set; } = Utilities.Directions.DIR_NONE;
     public Vector2 DirectionUnitVector { get; set; } = new Vector2();
     public Vector2 DirectionVector { get; set; }
+    public Vector2 FacingUnitVector { get; set; } = new Vector2();   // the direction our character is facing .... equal to the last moving direction.
 
-    // the direction our character is facing .... equal to the last moving direction.
-    public Vector2 FacingUnitVector { get; set; } = new Vector2();
 
-	public void GetInput()
+    private void GetInput()
 	{
         if (Input.IsActionJustPressed("left_click"))
         {
@@ -44,25 +43,11 @@ public partial class Player : CharacterBody2D
 
             GD.Print("left click DV: " + DirectionVector);
         }
-
-        if (Input.IsActionJustPressed("right_click"))
-        {
-            IsMoving = false;
-            GD.Print("right click");
-            //IsAttacking = true;
-        }
-
-        if (Input.IsActionJustPressed("middle_click"))
-        {
-            IsMoving = false;
-            //IsAttacking = false;
-            GD.Print("middle click");
-        }
     }
 
     public override void _Ready()
     {
-        GlobalPosition = new Vector2(50, 20);
+        GlobalPosition = new Vector2(150, 100);
 
         // set our initial player vectors
         DirectionVector = new Vector2(0, 0);
@@ -123,54 +108,38 @@ public partial class Player : CharacterBody2D
             DirectionUnitVector = DirectionVector.Normalized();
             TargetDestinationPosition = GlobalPosition;
 
+            var collider_obj = collision_info.GetCollider();
+
+            if (collision_info.GetCollider() is MonsterObject)
+            {
+                GD.Print("Player object hit a monster: " + ((Node)collision_info.GetCollider()).Name);
+                GD.Print("Player object hit a monster: " + ((Node)collision_info.GetCollider()));
+
+                var monster_obj = (MonsterObject)collider_obj;
+                monster_obj.TakeDamage(_damage);
+            }
+            else if (collision_info.GetCollider() is RoomObject)
+            {
+                GD.Print("Player object hit a room object");
+            }
+            else if (collision_info.GetCollider() is Player)
+            {
+                GD.Print("Player object hit a monster");
+            }
+            else
+            {
+                GD.Print("Player object hit something else");
+            }
         }
 
-        //// MOUSE CLICK MOVEMENT
-        ////
-        //// otherwise move the character
-        //if (Math.Sqrt(distance) > 3 && (HasCollided == false) && (IsAttacking == false))
-        //{
-        //    // move the character  for this frame
-        //    collision_info = MoveAndCollide(Velocity * (float)delta);
-        //} else
-        //{
-        //    // we've hit something or reached our target destination, so stop the moving.
-        //    TargetDestinationPosition = GlobalPosition;
-        //    collision_info = MoveAndCollide(new Vector2(0, 0));
 
-        //    // Zero out all the movement variables
-        //    TargetDestinationPosition = GlobalPosition;
-        //    Velocity = new Vector2(0, 0);
-        //    DirectionUnitVector = new Vector2(0, 0);
-        //    DirectionVector = new Vector2(0, 0);
-        //    Direction = Directions.DIR_NONE;
-        //}
 
-        //// COLLISION CHECKS
-        ////
-        //// check if we collided with something...if so...signal that we've collided so the next iteration zeroes the values.
-        //if(collision_info != null)
-        //{
-        //    GD.Print("collided");
-        //    HasCollided = true;
 
-        //    // Zero out all the movement variables except the facing unit vector
-        //    TargetDestinationPosition = GlobalPosition;
-        //    Velocity = new Vector2(0, 0);
-        //    DirectionUnitVector = new Vector2(0, 0);
-        //    DirectionVector = new Vector2(0, 0);
-        //    Direction = Directions.DIR_NONE;
 
-        //} else
-        //{
-        //    //GD.Print("no collision");
 
-        //    HasCollided = false;
-        //}
 
-        Direction = Utilities.GetDirection_9WAY(DirectionVector);
 
-        // load the arrow graphic
+        // load the direction arrow graphic
         var direction_arrow_sprites = GetNode<Sprite2D>("DirectionArrowSprite");
         direction_arrow_sprites.RegionRect = new Rect2((int)Direction * 16, 0, 16, 16);
     }

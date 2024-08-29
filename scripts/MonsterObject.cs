@@ -1,14 +1,18 @@
-﻿using Godot;
+using Godot;
 using System;
 
 namespace ProjectDuhamel.scripts
 {
-    public partial class RoomObjects : CharacterBody2D
+    public partial class MonsterObject : CharacterBody2D
     {
-        // The speed of the object
-        public float RoomObjectSpeed { get; set; }
-        public float RoomObjectRotationAngle { get; set; } = 0.0f;
-        public Texture2D RoomObjectTexture { get; set; } = new Texture2D();
+        // Monster specific
+        public int HitPoints { get; set; } = 10;
+
+        // General properties for this monster
+
+        public float MonsterObjectSpeed { get; set; }
+        public float MonsterObjectRotationAngle { get; set; } = 0.0f;
+        public Texture2D MonsterObjectTexture { get; set; } = new Texture2D();
 
         public Vector2 CurrentPosition { get; set; } = new Vector2();
         public Vector2 LastPosition { get; set; } = new Vector2();
@@ -31,26 +35,6 @@ namespace ProjectDuhamel.scripts
         // the location of the tileset image
         public string AssetPath { get; set; } = string.Empty;
 
-        /// <summary>
-        /// Parameterless constructor -- needed for Instatiation.
-        /// </summary>
-        public RoomObjects()
-        {
-        }
-
-        //public RoomObjects(Vector2 tile_pos, 
-        //    TileMapLayer map_layer, 
-        //    int tileset_source_id,
-        //    Vector2I[] atlas_coord_array,
-        //    CharacterBody2D obj) {
-
-
-        //    TilePos = tile_pos;
-        //    Layer = map_layer;
-        //    TileSetSourceId = tileset_source_id;
-        //    AtlasCoordArray = atlas_coord_array;
-        //    CharacterBodyObj = obj;
-        //}
 
         /// <summary>
         /// Used to initialize data for the object after it has been instantiated since you can't call a
@@ -63,12 +47,12 @@ namespace ProjectDuhamel.scripts
         /// <param name="dir_vector">direction that the object is moving -- station is new Vector2(0,0)</param>
         /// <param name="obj">Character2D object for this object</param>
         /// <param name="resource_path">location of the graphic image for this item</param>
-        public void Initialize(string name,Vector2 position, float speed, TileMapLayer layer, int tile_set_source_id, 
-            Vector2I[] atlas_coord_array, Vector2 dir_vector, RectangleShape2D shape, 
+        public void Initialize(string name, Vector2 position, float speed, TileMapLayer layer, int tile_set_source_id,
+            Vector2I[] atlas_coord_array, Vector2 dir_vector, RectangleShape2D shape,
             string resource_path, int[] collision_layer_values, int[] collision_mask_values)
         {
             this.Name = name;
-            this.RoomObjectSpeed = speed;
+            this.MonsterObjectSpeed = speed;
             this.Position = position;
             //CurrentPosition = position;
             //LastPosition = position;
@@ -95,15 +79,15 @@ namespace ProjectDuhamel.scripts
             Direction = Utilities.GetDirection_9WAY(DirectionUnitVector);
 
             // determine the angle made by the unit vector and apply it to the rotation of this Node object in Godot.
-            RoomObjectRotationAngle = (float)Math.Atan2(dir_vector.Y, dir_vector.X);
-            this.Rotation = RoomObjectRotationAngle;
+            MonsterObjectRotationAngle = (float)Math.Atan2(dir_vector.Y, dir_vector.X);
+            this.Rotation = MonsterObjectRotationAngle;
 
             // set the velocity of the object
-            Velocity = RoomObjectSpeed * DirectionUnitVector;
+            Velocity = MonsterObjectSpeed * DirectionUnitVector;
 
             // Set the collision layers in GODOT
             SetCollisionLayerValue(1, false); // turn off the default layer
-            foreach(int value in collision_layer_values)
+            foreach (int value in collision_layer_values)
             {
                 SetCollisionLayerValue(value, true); // and set our own
             }
@@ -117,30 +101,13 @@ namespace ProjectDuhamel.scripts
         }
 
 
-        //public Vector2I GetAtlasCoord_Random()
-        //{
-        //    var rng = new RandomNumberGenerator();
-        //    var rand_number = rng.RandiRange(0, AtlasCoordArray.Length - 1);
-        //    return AtlasCoordArray[rand_number];
-        //}
 
-        //public Vector2I GetAtlasCoord_AtIndex(int index)
-        //{
-        //    if (index >= 0 && index < AtlasCoordArray.Length)
-        //    {
-        //        return AtlasCoordArray[index];
-        //    }
-        //    else
-        //    {
-        //        GD.Print("Error: index(" + index + ") out of bounds in GetAtlasCoord_AtIndex()");
-        //        return new Vector2I(0, 0);
-        //    }
-        //}
+
 
         public override void _Ready()
         {
             string path = AssetPath;
-            Sprite2D sprite = GetNode<Sprite2D>("RoomObjectSprite");
+            Sprite2D sprite = GetNode<Sprite2D>("MonsterObjectSprite");
 
             //Position = GlobalPosition;
 
@@ -177,26 +144,63 @@ namespace ProjectDuhamel.scripts
             var rng = new RandomNumberGenerator();
             var rand_number = rng.RandiRange(0, AtlasCoordArray.Length - 1);
             atlas_texture.Region = new Rect2(AtlasCoordArray[rand_number].X * 16, AtlasCoordArray[rand_number].Y * 16, 16, 16);
-            RoomObjectTexture = atlas_texture;
+            MonsterObjectTexture = atlas_texture;
             // 5. set our sprite's texture to the new sub region image
-            sprite.Texture = RoomObjectTexture;
+            sprite.Texture = MonsterObjectTexture;
         }
 
-        // called every frame/ 'delta' is the elapsed time since the previous frame
+
+
+
+
+
+
         public override void _PhysicsProcess(double delta)
         {
-            this.Rotation = RoomObjectRotationAngle;
+            this.Rotation = MonsterObjectRotationAngle;
 
             // Update the velocity just in case....
-            Velocity = RoomObjectSpeed * DirectionUnitVector;
+            Velocity = MonsterObjectSpeed * DirectionUnitVector;
 
             var collision = MoveAndCollide(Velocity * (float)delta);
 
             if (collision != null)
             {
-                GD.Print("RoomObject collided at " + GlobalPosition);
+
+                GD.Print("MonsterObject collided with " + collision.GetCollider() + " at " + GlobalPosition);
+
+                if (collision.GetCollider() is MonsterObject)
+                {
+                    GD.Print("Monster hit a monster");
+                }
+                else if (collision.GetCollider() is RoomObject)
+                {
+                    GD.Print("Monster hit a room object");
+                }
+                else if (collision.GetCollider() is Player)
+                {
+                    GD.Print("Monster hit a monster");
+                }
+                else
+                {
+                    GD.Print("Monster hit something else");
+                }
+
+                this.QueueFree();
+            }
+        }
+
+        internal void TakeDamage(int v)
+        {
+            GD.Print("Monster took damage of " + v + " points");
+            this.HitPoints -= v;
+            if (HitPoints <= 0)
+            {
+                GD.Print("Monster died");
                 this.QueueFree();
             }
         }
     }
 }
+
+

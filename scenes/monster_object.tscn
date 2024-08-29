@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3 uid="uid://ddwtyk2px0pxj"]
+
+[ext_resource type="Script" path="res://scripts/MonsterObject.cs" id="1_wejv5"]
+
+[node name="MonsterObject" type="CharacterBody2D"]
+script = ExtResource("1_wejv5")
+
+[node name="MonsterObjectSprite" type="Sprite2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]

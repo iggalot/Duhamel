@@ -1,8 +1,10 @@
 using Godot;
+using ProjectDuhamel.models.monsters;
 using ProjectDuhamel.models.spells;
 using ProjectDuhamel.scripts;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.Drawing;
 
 
@@ -47,11 +49,11 @@ public enum CollisionMaskAssignments
 
 public partial class LevelTemplate : Node2D
 {
-    public List<RoomObjects> activeRoomObjects { get; set; } = new List<RoomObjects>();
-    public Dictionary<SpellIdentifiers, BaseSpellObjectGraphics> spellObjectGraphicsDictionary { get; set; } = new Dictionary<SpellIdentifiers, BaseSpellObjectGraphics>();
-
+    public Dictionary<MonsterRaceIdentifiers, BaseMonsterObjectGraphics> monsterObjectGraphicsDictionary { get; set; } = new Dictionary<MonsterRaceIdentifiers, BaseMonsterObjectGraphics>();
+    SpellManager spellManager { get; set; }
 
     PackedScene RoomObjectScene = GD.Load<PackedScene>("res://scenes/room_object.tscn");
+    PackedScene MonsterObjectScene = GD.Load<PackedScene>("res://scenes/monster_object.tscn");
 
 
     public enum WallDirections
@@ -67,27 +69,34 @@ public partial class LevelTemplate : Node2D
     // Tilemap Layers in GoDOT project
     const string floor = "Floor";
     const string walls = "Walls";
-    const string spell_effects = "SpellEffects";
     const string items = "Items";
+    const string spell_effects = "SpellEffects";
+
+
+    // resource file names
+    const string monster_image_resource1 = "res://assets/character_and_tileset/Dungeon_Character.png";
+
 
     // Our tilemap layers for our template
-    public TileMapLayer spell_effects_map_layer { get; set; }
     public TileMapLayer floor_effects_map_layer { get; set; }
     public TileMapLayer wall_effects_map_layer { get; set; }
     public TileMapLayer item_effects_map_layer { get; set; }
+    public TileMapLayer monster_effects_map_layer { get; set; }
+    public TileMapLayer spell_effects_map_layer { get; set; }
+
+
 
 
     // tileset source IDs for the layers -- should be zero if only one tileset on the tilemaplayer
     int floor_tileset_source_id = 0; 
     int walls_tileset_source_id = 0;
-    int spell_effects_tileset_source_id = 0;
     int monster_images_tileset_source_id = 0;
 
     /// <summary>
     /// Room dimensions
     /// </summary>
-    public int roomWidth { get; set; } = 150;
-    public int roomHeight { get; set; } = 150;
+    public int roomWidth { get; set; } = 300;
+    public int roomHeight { get; set; } = 300;
 
     /// <summary>
     /// Room corners in pixel dimensions
@@ -189,69 +198,43 @@ public partial class LevelTemplate : Node2D
     Vector2I[] wall_tiles_lower_right_corner = { new Vector2I(5, 4) };
 
 
-    Vector2I[] spell_firebolt_effects_tiles =
-    {
-        new Vector2I(0, 0),
-        new Vector2I(1, 0),
-        new Vector2I(2, 0)
-    };
-
-
-    Vector2I[] spell_frostbolt_effects_tiles =
-    {
-        new Vector2I(0, 1)
-    };
-
-    Vector2I[] spell_lightningbolt_effects_tiles =
-    {
-        new Vector2I(0, 2)
-    };
-
-    Vector2I[] spell_poisonbolt_effects_tiles =
-{
-        new Vector2I(0, 3)
-    };
-
-    Vector2I[] spell_earthbolt_effects_tiles =
-    {
-        new Vector2I(0, 4)
-    };
+   
 
     Vector2I[] monster_images_tiles =
     {
-        new Vector2I(0, 0),
-        new Vector2I(0, 1),
-        new Vector2I(0, 2),
-        new Vector2I(0, 3),
+        //new Vector2I(0, 0),
+        //new Vector2I(0, 1),
+        //new Vector2I(0, 2),
+        //new Vector2I(0, 3),
        
-        new Vector2I(1, 0),
-        new Vector2I(1, 1),
-        new Vector2I(1, 2),
-        new Vector2I(1, 3),
+        //new Vector2I(1, 0),
+        //new Vector2I(1, 1),
+        //new Vector2I(1, 2),
+        //new Vector2I(1, 3),
        
-        new Vector2I(2, 0),
-        new Vector2I(2, 1),
-        new Vector2I(2, 2),
-        new Vector2I(2, 3),
+        //new Vector2I(2, 0),
+        //new Vector2I(2, 1),
+        //new Vector2I(2, 2),
+        //new Vector2I(2, 3),
         
-        new Vector2I(3, 0),
-        new Vector2I(3, 1),
-        new Vector2I(3, 2),
-        new Vector2I(3, 3),
+        //new Vector2I(3, 0),
+        //new Vector2I(3, 1),
+        //new Vector2I(3, 2),
+        //new Vector2I(3, 3),
 
-        new Vector2I(4, 0),
+        //new Vector2I(4, 0),
         new Vector2I(4, 1),
-        new Vector2I(4, 2),
+        //new Vector2I(4, 2),
         new Vector2I(4, 3),
 
-        new Vector2I(5, 0),
+        //new Vector2I(5, 0),
         new Vector2I(5, 1),
-        new Vector2I(5, 2),
+        //new Vector2I(5, 2),
         new Vector2I(5, 3),
 
-        new Vector2I(6, 0),
+        //new Vector2I(6, 0),
         new Vector2I(6, 1),
-        new Vector2I(6, 2),
+        //new Vector2I(6, 2),
         new Vector2I(6, 3),
     };
 
@@ -259,13 +242,16 @@ public partial class LevelTemplate : Node2D
     public override void _Ready()
     {
         // setup our layer constants
-        spell_effects_map_layer = GetNode<TileMapLayer>(spell_effects);
         floor_effects_map_layer = GetNode<TileMapLayer>(floor);
         wall_effects_map_layer = GetNode<TileMapLayer>(walls);
         item_effects_map_layer = GetNode<TileMapLayer>(items);
+        spell_effects_map_layer = GetNode<TileMapLayer>(spell_effects);
 
-        // set up our spell graphics dictionary
-        CreateSpellGraphics();
+        // create our spellManager
+        spellManager = new SpellManager(spell_effects_map_layer);
+
+        // set up our graphics dictionarird
+        CreateMonsterGraphics(); //monsters
 
         // create a shape by determining the number of tiles for the room and the walls in each direction
         num_floor_tiles_hor = (int)Math.Ceiling((double)(roomWidth / tileSize));
@@ -299,7 +285,7 @@ public partial class LevelTemplate : Node2D
         DrawWalls(walls_map_layer);
 
  //       TileMapLayer spell_effects_map_layer = GetNode<TileMapLayer>(spell_effects);
-        DrawSpellEffects(spell_effects_map_layer);
+        DrawSpellEffects(spellManager.spell_effects_map_layer);
     }
 
     private void DrawSpellEffects(TileMapLayer tilemap_layer)
@@ -529,36 +515,106 @@ public partial class LevelTemplate : Node2D
 	{
         Player player = GetNode<CharacterBody2D>("Player") as Player;
         
+        // Testing for player input for shooting and conjuring monsters
         if (Input.IsActionJustPressed("shoot"))
         {
-            ShootSpell(player);
+            ConjureSpell(player);
+        }
+
+        // Testing for player input for shooting and conjuring monsters
+        if (Input.IsActionJustPressed("right_click"))
+        {
+            ConjureMonster(new Vector2(25, 25));
+            ConjureMonster(new Vector2(25, 75));
+            ConjureMonster(new Vector2(25, 125));
         }
     }
 
-    public void CreateSpellGraphics()
+    public void CreateMonsterGraphics()
     {
-        List<BaseSpellObjectGraphics> spell_list = new List<BaseSpellObjectGraphics>();
+        List<BaseMonsterObjectGraphics> monster_list = new List<BaseMonsterObjectGraphics>();
 
         // create our spell
-        spell_list.Add(new BaseSpellObjectGraphics("Fire Bolt", 500, new Size(5, 5), SpellIdentifiers.SPELL_FIRE_BOLT,
-            "res://spell-effects.png", spell_effects_map_layer, spell_effects_tileset_source_id, spell_firebolt_effects_tiles));
-        spell_list.Add(new BaseSpellObjectGraphics("Lightning Bolt", 750, new Size(25, 2), SpellIdentifiers.SPELL_LIGHTNING_BOLT,
-            "res://spell-effects.png", spell_effects_map_layer, spell_effects_tileset_source_id, spell_lightningbolt_effects_tiles));
-        spell_list.Add(new BaseSpellObjectGraphics("Poison Bolt", 300, new Size(12, 12), SpellIdentifiers.SPELL_POISON_BOLT,
-            "res://spell-effects.png", spell_effects_map_layer, spell_effects_tileset_source_id, spell_poisonbolt_effects_tiles));
-        spell_list.Add(new BaseSpellObjectGraphics("Frost Bolt", 300, new Size(16, 6), SpellIdentifiers.SPELL_FROST_BOLT,
-            "res://spell-effects.png", spell_effects_map_layer, spell_effects_tileset_source_id, spell_frostbolt_effects_tiles));
-        spell_list.Add(new BaseSpellObjectGraphics("Earth Bolt", 200, new Size(20, 20), SpellIdentifiers.SPELL_EARTH_BOLT,
-            "res://spell-effects.png", spell_effects_map_layer, spell_effects_tileset_source_id, spell_earthbolt_effects_tiles));
+        monster_list.Add(new BaseMonsterObjectGraphics("Skeleton", 50, new Size(20, 20), MonsterRaceIdentifiers.MONSTER_RACE_SKELETON,
+            monster_image_resource1, monster_effects_map_layer, monster_images_tileset_source_id, monster_images_tiles));
 
         // create our spell dictionary
-        foreach (BaseSpellObjectGraphics new_spell in spell_list)
+        foreach (BaseMonsterObjectGraphics new_monster in monster_list)
         {
-            spellObjectGraphicsDictionary.Add(new_spell.ID, new_spell);
+            monsterObjectGraphicsDictionary.Add(new_monster.ID, new_monster);
         }
     }
 
-    private void ShootSpell(Player player)
+    private void ConjureMonster(Vector2 position)
+    {
+        MonsterRaceIdentifiers monster_id = MonsterRaceIdentifiers.MONSTER_RACE_SKELETON;
+
+
+        BaseMonsterObjectGraphics new_monster = monsterObjectGraphicsDictionary[monster_id];
+        new_monster.Name = monster_id.ToString() + Guid.NewGuid().ToString().Substring(0, 5);
+
+        // which item type is this?
+        int[] layer_bits = { (int)CollisionLayerAssignments.MONSTERS };
+        // which items can it hit?
+        int[] mask_bits = {
+            (int)(CollisionMaskAssignments.WALLS),
+            (int)(CollisionMaskAssignments.ITEMS),
+            (int)(CollisionMaskAssignments.MONSTERS),
+            (int)(CollisionMaskAssignments.PLAYER),
+            (int)(CollisionMaskAssignments.SPELLS_FRIENDLY)
+
+        };
+
+        // check if the player is facing a direction / if not, set the spell facing vector to a default direction
+        // Need better logic here.  
+ 
+        new_monster.DirectionUnitVector = new Vector2(1, 0);
+
+        // set the position of the spell object
+        new_monster.Position = position;
+        new_monster.MonsterSpeed = 0;
+        new_monster.Velocity = new Vector2(0, 0);
+
+        // instantiate the room and initialize its values.
+        // Must call Initialize() with the initial values since the scene constructor is parameterless.
+        MonsterObject new_monster_obj = MonsterObjectScene.Instantiate() as MonsterObject;
+        new_monster_obj.Initialize(
+            new_monster.Name,
+            new_monster.Position,
+            new_monster.MonsterSpeed,
+            new_monster.GraphicsLayer,
+            new_monster.TileSetSourceId,
+            new_monster.AtlasCoordArray,
+            new_monster.DirectionUnitVector,
+            new_monster.MonsterShape,
+            new_monster.AssetPath,
+            layer_bits,
+            mask_bits
+        );
+
+        new_monster_obj.Velocity = new_monster.Velocity;
+
+        /// LAYER ASSIGNMENTS      MASK BITS (used for SetCollisionMask function)
+        /// 1. FLOORS               1
+        /// 2. WALLS                2
+        /// 3. ENVIRONMENT          3
+        /// 4. SPELLS FRIENDLY      4
+        /// 5. SPELLS HOSTILE       5
+        /// 5. ITEMS                6
+        /// 6. MONSTERS             7
+        /// 7. PLAYER               8
+
+        //GD.Print("spell: " + spell_id.ToString());
+        //GD.Print("global position of spell: " + new_room.GlobalPosition.ToString());
+        //GD.Print("direction vector of spell: " + new_room.DirectionVector.ToString());
+
+
+        Node2D Rooms = GetNode("MonsterObjects") as Node2D;
+        Rooms.AddChild(new_monster_obj);
+    }
+
+
+    private void ConjureSpell(Player player)
     {
         var rng = new RandomNumberGenerator();
         var rand_number = rng.RandiRange(0, 5);
@@ -589,11 +645,10 @@ public partial class LevelTemplate : Node2D
             GD.Print("earth selected");
         }
 
-        BaseSpellObjectGraphics new_spell = spellObjectGraphicsDictionary[spell_id];
-        new_spell.Name = spell_id.ToString() + Guid.NewGuid().ToString().Substring(0, 5);
+        BaseSpellObjectGraphics new_spell = spellManager.spellObjectGraphicsDictionary[spell_id];
+        GD.Print("spell_id: " + spell_id.ToString());
 
-        // Instantiate the scene object and then add the data from the spell dictionary --
-        // this is needed because the room scene is instantiated through the parameterless constructor.
+        new_spell.Name = spell_id.ToString() + Guid.NewGuid().ToString().Substring(0, 5);
 
         // which item type is this?
         int[] layer_bits = { (int)CollisionLayerAssignments.SPELLS_FRIENDLY };
@@ -617,23 +672,35 @@ public partial class LevelTemplate : Node2D
         // set the position of the spell object
         new_spell.Position = player.Position;
 
+        // retrieve data values from the spell manager for this spell type
+        var spell_speed = (spellManager.baseSpellData[new_spell.ID]).SpellSpeed;
+        var spell_shape = (spellManager.baseSpellData[new_spell.ID]).SpellShape;
+        var graphics_layer = (spellManager.spellObjectGraphicsDictionary[new_spell.ID]).GraphicsLayer;
+        var tile_set_source_id = (spellManager.spellObjectGraphicsDictionary[new_spell.ID]).TileSetSourceId;
+        var atlas_coord_array = (spellManager.spellObjectGraphicsDictionary[new_spell.ID]).AtlasCoordArray;
+        var asset_path = (spellManager.spellObjectGraphicsDictionary[new_spell.ID]).AssetPath;
+
+
         // instantiate the room and initialize its values.
         // Must call Initialize() with the initial values since the scene constructor is parameterless.
-        RoomObjects new_room_object = RoomObjectScene.Instantiate() as RoomObjects;
+        RoomObject new_room_object = RoomObjectScene.Instantiate() as RoomObject;
         new_room_object.Initialize(
             new_spell.Name,
             new_spell.Position,
-            new_spell.SpellSpeed,
-            new_spell.GraphicsLayer,
-            new_spell.TileSetSourceId,
-            new_spell.AtlasCoordArray,
+            spell_speed,
+            graphics_layer,
+            tile_set_source_id,
+            atlas_coord_array,
             new_spell.DirectionUnitVector,
-            new_spell.SpellShape,
-            new_spell.AssetPath,
+            spell_shape,
+            asset_path,
             layer_bits,
             mask_bits
-        ); 
-        
+        );
+
+        new_room_object.Velocity = new_spell.Velocity;
+
+
 
         /// LAYER ASSIGNMENTS      MASK BITS (used for SetCollisionMask function)
         /// 1. FLOORS               1
@@ -652,5 +719,20 @@ public partial class LevelTemplate : Node2D
 
         Node2D Rooms = GetNode("RoomObjects") as Node2D;
         Rooms.AddChild(new_room_object);
+    }
+
+    public void _on_monster_spawn_timer_timeout()
+    {
+        var rng = new RandomNumberGenerator();
+        var rand_number = rng.RandiRange(0, 3);
+
+
+        for (int i = 0; i < rand_number; i++)
+        {
+            var rand_pos_x = rng.RandiRange(25, 200);
+            var rand_pos_y = rng.RandiRange(0, 200);
+            ConjureMonster(new Vector2(rand_pos_x, rand_pos_y));
+        }
+        GD.Print("spawing a monster");
     }
 }

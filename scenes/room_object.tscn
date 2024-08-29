@@ -1,9 +1,9 @@
 [gd_scene load_steps=2 format=3 uid="uid://d1rbj76vofk8p"]
 
-[ext_resource type="Script" path="res://scripts/RoomObjects.cs" id="1_m6eux"]
+[ext_resource type="Script" path="res://scripts/RoomObject.cs" id="1_t0at4"]
 
 [node name="RoomObject" type="CharacterBody2D"]
-script = ExtResource("1_m6eux")
+script = ExtResource("1_t0at4")
 
 [node name="RoomObjectSprite" type="Sprite2D" parent="."]
 
