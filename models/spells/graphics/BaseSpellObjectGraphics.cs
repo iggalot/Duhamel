@@ -1,8 +1,6 @@
 ﻿using Godot;
 using ProjectDuhamel.scripts;
 using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
 
 namespace ProjectDuhamel.models.spells
 {

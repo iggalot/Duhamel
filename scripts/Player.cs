@@ -14,6 +14,9 @@ public partial class Player : CharacterBody2D
     private bool IsAttacking = false;
     private bool IsMoving = true; // default state is true
 
+    // Player specific
+    public int HitPoints { get; set; } = 100;
+
     /// <summary>
     /// Directional information for the player
     /// </summary>
@@ -67,6 +70,12 @@ public partial class Player : CharacterBody2D
         SetCollisionMaskValue((int)CollisionLayerAssignments.ITEMS, true);  // assign to proper layer
         SetCollisionMaskValue((int)CollisionLayerAssignments.MONSTERS, true);  // assign to proper layer
 
+        //// Initialize the health bars
+        //var health_bar = GetNode<ProgressBar>("HealthBar/ProgressBar");
+        //health_bar.MaxValue = HitPoints;  // sets the upper limit of the progress bar
+        //health_bar.Value = HitPoints; // sets the current limit of the progress bar
+        //health_bar.MinValue = 0; // set the lower bound of the progress bar
+        //UpdateHealthBar();
     }
 
     public override void _PhysicsProcess(double delta)
@@ -74,13 +83,12 @@ public partial class Player : CharacterBody2D
         // check for collisions with enemies or objects nearby, or if we are attacking something
         // or if we should move
         GetInput();
-        // update the direction of our char.
-        Direction = Utilities.GetDirection_9WAY(DirectionVector);
 
         // compute the current distance of the player from the target destination point
         var distance = GlobalPosition.DistanceSquaredTo(TargetDestinationPosition);
 
-        // var collision = MoveAndCollide(Velocity * (float)delta);
+        // update the direction of our char.
+        Direction = Utilities.GetDirection_9WAY(DirectionVector);
 
         KinematicCollision2D collision_info = null;
 
@@ -133,17 +141,39 @@ public partial class Player : CharacterBody2D
             }
         }
 
-
-
-
-
-
-
-
         // load the direction arrow graphic
         var direction_arrow_sprites = GetNode<Sprite2D>("DirectionArrowSprite");
         direction_arrow_sprites.RegionRect = new Rect2((int)Direction * 16, 0, 16, 16);
     }
 
+    public void TakeDamage(int v)
+    {
+        GD.Print("Monster took damage of " + v + " points");
+        this.HitPoints -= v;
+        if (HitPoints <= 0)
+        {
+            GD.Print("Monster died");
+            this.QueueFree();
+        }
 
+        UpdateHealthBar();
+    }
+
+    public void UpdateHealthBar()
+    {
+        var health_bar = GetNode<ProgressBar>("HealthBar/ProgressBar");
+
+        // hide the health bars if full health
+        if (health_bar.MaxValue == HitPoints)
+        {
+            health_bar.Visible = false;
+        }
+        else
+        {
+            health_bar.Visible = true;
+        }
+
+        // set the current value
+        health_bar.Value = HitPoints;
+    }
 }

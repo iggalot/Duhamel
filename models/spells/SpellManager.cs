@@ -78,14 +78,12 @@ namespace ProjectDuhamel.models.spells
 
             return str; ;
         }
-
     }
 
     public partial class SpellManager : RoomObject
     {
         // resource file names
         const string spell_image_resource1 = "res://spell-effects.png";
-
 
         // tileset source IDs for the layers -- should be zero if only one tileset on the tilemaplayer
         int spell_effects_tileset_source_id = 0;
@@ -125,10 +123,10 @@ namespace ProjectDuhamel.models.spells
         };
         #endregion
 
-        public SpellManager(TileMapLayer spell_effects)
+        public SpellManager(TileMapLayer layer)
         {
             // setup our layer constants
-            spell_effects_map_layer = spell_effects;
+            spell_effects_map_layer = layer;
 
             LoadData();
             CreateSpellGraphics();

@@ -322,9 +322,9 @@ region_rect = Rect2(0, 0, 16, 16)
 
 [node name="MonsterObjects" type="Node2D" parent="."]
 
+[node name="SpellObjects" type="Node2D" parent="."]
+
 [node name="MonsterSpawnTimer" type="Timer" parent="."]
 autostart = true
-
-[node name="SpellObjects" type="Node2D" parent="."]
 
 [connection signal="timeout" from="MonsterSpawnTimer" to="." method="_on_monster_spawn_timer_timeout"]

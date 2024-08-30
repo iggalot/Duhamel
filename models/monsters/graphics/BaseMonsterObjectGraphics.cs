@@ -1,27 +1,12 @@
 ﻿using Godot;
-using ProjectDuhamel.models.monsters;
 using ProjectDuhamel.scripts;
 using System.Collections.Generic;
-using System.Drawing;
 
-namespace ProjectDuhamel.models.spells
+namespace ProjectDuhamel.models.monsters
 {
-    public partial class BaseMonsterObjectGraphics : MonsterObject
+    public partial class BaseMonsterObjectGraphics : RoomObject
     {
-        public string MonsterName { get; set; } = "Unnamed Monster";
-
-        public MonsterRaceIdentifiers ID { get; set; } = MonsterRaceIdentifiers.MONSTER_RACE_UNDEFINED;
-        public float MonsterSpeed { get; set; } = 0.0f;
-
-        /// <summary>
-        /// The hitbox size of the monster -- can also be used to scale the graphic
-        /// </summary>
-        public Size MonsterSize { get; set; } = new Size(5, 5);
-
-        /// <summary>
-        /// The shape of the CollisionShape2D object for this object
-        /// </summary>
-        public RectangleShape2D MonsterShape { get; set; } = new RectangleShape2D();
+        public MonsterIdentifiers ID { get; set; } = MonsterIdentifiers.MONSTER_RACE_UNDEFINED;
 
         // Contains the texture(s) for the spell
         public List<Texture2D> Texture { get; set; } = new List<Texture2D>();
@@ -36,13 +21,9 @@ namespace ProjectDuhamel.models.spells
                 
         }
 
-        public BaseMonsterObjectGraphics(string monster_name, float monster_speed, Size monster_size, 
-            MonsterRaceIdentifiers monster_id, string asset_path, TileMapLayer layer, 
+        public BaseMonsterObjectGraphics( MonsterIdentifiers monster_id, string asset_path, TileMapLayer layer, 
             int tile_set_source_id, Vector2I[] atlas_coord)
         {
-            this.MonsterName = monster_name;
-            this.MonsterSpeed = monster_speed;
-            this.MonsterSize = monster_size;
             this.ID = monster_id;
 
             this.AssetPath = asset_path;
@@ -50,21 +31,79 @@ namespace ProjectDuhamel.models.spells
             this.TileSetSourceId = tile_set_source_id;
             this.AtlasCoordArray = atlas_coord;
 
-            this.MonsterShape = CreateMonsterObject();
+            Texture = MakeTextures();
         }
 
-        /// <summary>
-        /// Creates a physical GODOT object for the spell
-        /// with a rectangular collision shape
-        /// </summary>
-        /// <returns></returns>
-        private RectangleShape2D CreateMonsterObject()
+        private List<Texture2D> MakeTextures()
         {
-            // create the node for the object
-            var monster_shape = new RectangleShape2D();
-            monster_shape.Size = new Vector2((float)MonsterSize.Width, MonsterSize.Height);
+            var temp_list = new List<Texture2D>();
 
-            return monster_shape;
+            // TODO:  This should be abstracted out as a utility function for loading the subregion of an image from an atlas
+            // 1. load the image from file and create a texture from it
+            // --- can we use a current resource instead?
+
+            //// for loading an image from a non-resource image file
+            //var image = Image.LoadFromFile(path);
+            //image.GetRegion(new Rect2I(16, 16, 16, 16));
+            //var texture = ImageTexture.CreateFromImage(image);
+
+            // an alternate way to load an image
+            // TODO:  need to make resources out of images
+            Image loaded_image = new Image();
+            var error = loaded_image.Load(AssetPath);
+            if (error != Error.Ok)
+            {
+                GD.Print("Error loading image: " + error);
+            }
+            loaded_image.GetRegion(new Rect2I(16, 16, 16, 16));
+
+            var texture = new ImageTexture();
+            texture.SetImage(loaded_image);
+
+
+            for (int i = 0; i < AtlasCoordArray.Length; i++)
+            {
+                // 2. create a new atlas texture
+                var atlas_texture = new AtlasTexture();
+
+                // 3. set the new atlas_texture's image atlas to the texture we loaded
+                atlas_texture.Atlas = texture;
+
+                // 4. get the sub region within the atlast texture based on the coordinate in the atlast image --
+                //    if there is more than one sub region, this will be a random one
+
+                var region = new Rect2(AtlasCoordArray[i].X * 16, AtlasCoordArray[i].Y * 16, 16, 16);
+                atlas_texture.Region = region;
+                GD.Print("atlas_texture" + atlas_texture);
+
+                temp_list.Add(atlas_texture);
+            }
+
+            GD.Print("temp_list: " + temp_list.Count);
+
+            return temp_list;
+        }
+
+        // Returns a random texture from our list of processed textures
+        public Texture2D GetTextureRandom()
+        {
+            var rng = new RandomNumberGenerator();
+            return Texture[rng.RandiRange(0, Texture.Count - 1)];
+        }
+
+        // Returns a specified texture
+        public Texture2D GetTexture(int index = 0)
+        {
+            if (index >= 0 && index < Texture.Count)
+            {
+                return Texture[index];
+            }
+            else
+            {
+                GD.Print("Invalid index (" + index + ") passed to GetTexture() in BaseSpellObjectGraphics.cs");
+                return Texture[0];
+                // TODO:  Load a placeholder instead?
+            }
         }
     }
 }
