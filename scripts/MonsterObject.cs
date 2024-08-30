@@ -136,11 +136,11 @@ namespace ProjectDuhamel.scripts
                 }
                 else if (collision.GetCollider() is Player)
                 {
-                    //var player_obj = (Player)collider_obj;
+                    var player_obj = (Player)collider_obj;
+                    int dam = Utilities.GetRandomNumber(monsterData.MonsterMinDamage, monsterData.MonsterMaxDamage);
+                    player_obj.TakeDamage(dam);
 
-                    //player_obj.TakeDamage(Utilities.GetRandomNumber(monsterData.MonsterMinDamage, monsterData.MonsterMaxDamage));
-
-                    GD.Print("Monster hit a player");
+                    GD.Print("Monster hit a player for " + dam + " damage");
                 }
                 else
                 {
@@ -149,6 +149,8 @@ namespace ProjectDuhamel.scripts
 
                 this.QueueFree();
             }
+
+            UpdateHealthBar();
         }
 
         public void TakeDamage(int v)
@@ -159,6 +161,7 @@ namespace ProjectDuhamel.scripts
             {
                 GD.Print("Monster died");
                 this.QueueFree();
+
             }
 
             UpdateHealthBar();

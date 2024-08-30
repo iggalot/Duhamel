@@ -469,8 +469,6 @@ public partial class LevelTemplate : Node2D
     {
         MonsterIdentifiers monster_id = MonsterIdentifiers.MONSTER_RACE_SKELETON;
 
-        GD.Print("length of monster object graphics dictionary: " + monsterManager.monsterObjectGraphicsDictionary.Count);
-
         BaseMonsterObjectGraphics monster_graphics = monsterManager.monsterObjectGraphicsDictionary[monster_id];
         MonsterData monster_data = monsterManager.baseMonsterData[monster_id];
 

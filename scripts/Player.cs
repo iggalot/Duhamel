@@ -15,7 +15,7 @@ public partial class Player : CharacterBody2D
     private bool IsMoving = true; // default state is true
 
     // Player specific
-    public int HitPoints { get; set; } = 100;
+    public int HitPoints { get; set; } = 50;
 
     /// <summary>
     /// Directional information for the player
@@ -70,12 +70,12 @@ public partial class Player : CharacterBody2D
         SetCollisionMaskValue((int)CollisionLayerAssignments.ITEMS, true);  // assign to proper layer
         SetCollisionMaskValue((int)CollisionLayerAssignments.MONSTERS, true);  // assign to proper layer
 
-        //// Initialize the health bars
-        //var health_bar = GetNode<ProgressBar>("HealthBar/ProgressBar");
-        //health_bar.MaxValue = HitPoints;  // sets the upper limit of the progress bar
-        //health_bar.Value = HitPoints; // sets the current limit of the progress bar
-        //health_bar.MinValue = 0; // set the lower bound of the progress bar
-        //UpdateHealthBar();
+        // Initialize the health bars
+        var health_bar = GetNode<ProgressBar>("HealthBar/ProgressBar");
+        health_bar.MaxValue = HitPoints;  // sets the upper limit of the progress bar
+        health_bar.Value = HitPoints; // sets the current limit of the progress bar
+        health_bar.MinValue = 0; // set the lower bound of the progress bar
+        UpdateHealthBar();
     }
 
     public override void _PhysicsProcess(double delta)
@@ -144,6 +144,9 @@ public partial class Player : CharacterBody2D
         // load the direction arrow graphic
         var direction_arrow_sprites = GetNode<Sprite2D>("DirectionArrowSprite");
         direction_arrow_sprites.RegionRect = new Rect2((int)Direction * 16, 0, 16, 16);
+
+        // update the health bar
+        UpdateHealthBar();
     }
 
     public void TakeDamage(int v)
@@ -152,8 +155,9 @@ public partial class Player : CharacterBody2D
         this.HitPoints -= v;
         if (HitPoints <= 0)
         {
-            GD.Print("Monster died");
-            this.QueueFree();
+            GD.Print("Player died");
+            GetTree().Paused = true;
+
         }
 
         UpdateHealthBar();
