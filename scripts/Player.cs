@@ -6,7 +6,7 @@ using static Utilities;
 public partial class Player : CharacterBody2D
 {
 	public const float _speed = 200.0f;
-    public const int _damage = 3;
+    public const int _bare_damage = 4;
 
     private Vector2 TargetDestinationPosition = new Vector2();
 
@@ -115,8 +115,9 @@ public partial class Player : CharacterBody2D
                 GD.Print("Player object hit a monster: " + ((Node)collision_info.GetCollider()).Name);
                 GD.Print("Player object hit a monster: " + ((Node)collision_info.GetCollider()));
 
+                // Damage the monster
                 var monster_obj = (MonsterObject)collider_obj;
-                monster_obj.TakeDamage(_damage);
+                monster_obj.TakeDamage(_bare_damage);
             }
             else if (collision_info.GetCollider() is RoomObject)
             {

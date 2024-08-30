@@ -70,6 +70,7 @@ namespace ProjectDuhamel.scripts
             this.Name = name;
             this.RoomObjectSpeed = speed;
             this.Position = position;
+
             //CurrentPosition = position;
             //LastPosition = position;
 
@@ -205,6 +206,7 @@ namespace ProjectDuhamel.scripts
                     GD.Print("Room object hit a monster: " + ((Node)collision.GetCollider()));
 
                     var monster_obj = (MonsterObject)collider_obj;
+
                     monster_obj.TakeDamage(1);
                 }
                 else if (collision.GetCollider() is RoomObject)
@@ -213,7 +215,7 @@ namespace ProjectDuhamel.scripts
                 }
                 else if (collision.GetCollider() is Player)
                 {
-                    GD.Print("Room object hit a monster");
+                    GD.Print("Room object hit a player");
                 } 
                 else
                 {

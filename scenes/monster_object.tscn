@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://ddwtyk2px0pxj"]
+[gd_scene load_steps=3 format=3 uid="uid://ddwtyk2px0pxj"]
 
 [ext_resource type="Script" path="res://scripts/MonsterObject.cs" id="1_wejv5"]
+[ext_resource type="PackedScene" uid="uid://misuupv1wlh" path="res://scenes/HealthBar.tscn" id="2_ojtf1"]
 
 [node name="MonsterObject" type="CharacterBody2D"]
 script = ExtResource("1_wejv5")
@@ -8,3 +9,5 @@ script = ExtResource("1_wejv5")
 [node name="MonsterObjectSprite" type="Sprite2D" parent="."]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+
+[node name="HealthBar" parent="." instance=ExtResource("2_ojtf1")]

@@ -92,4 +92,24 @@ public partial class Utilities : Node
         return direction;
         
     }
+
+    /// <summary>
+    /// A functon to roll the dice between the range of min and max
+    /// </summary>
+    /// <param name="min"></param>
+    /// <param name="max"></param>
+    /// <returns></returns>
+    public static int GetRandomNumber(int min, int max)
+    {
+        // swap the values if our min max values are reversed
+        if (min > max)
+        {
+            int temp = min;
+            min = max;
+            max = temp;
+        }
+
+        RandomNumberGenerator rng = new RandomNumberGenerator();
+        return rng.RandiRange(min, max);
+    }
 }

@@ -1,6 +1,7 @@
 ﻿using Godot;
 using Godot.Collections;
 using ProjectDuhamel.scripts;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 
@@ -32,15 +33,6 @@ namespace ProjectDuhamel.models.spells
         SPELL_EARTH_BOLT = 4
     }
 
-
-
-
-
-
-
-
-
-
     // This must inherit from GodotObject for some reason to make the dictionary work.
     public partial class SpellData : GodotObject
     {
@@ -71,6 +63,22 @@ namespace ProjectDuhamel.models.spells
             SpellShape = shape;
         }
 
+        public override string ToString()
+        {
+            string str = String.Empty;
+            str += ("\nSpellID: " + SpellID);
+            str += ("\nSpellName: " + SpellName);
+            str += ("\nSpellMinDamage: " + SpellMinDamage);
+            str += ("\nSpellMaxDamage: " + SpellMaxDamage);
+            str += ("\nSpellRange: " + SpellRange);
+            str += ("\nSpellSpeed: " + SpellSpeed);
+            str += ("\nSpellSize: " + SpellSize);
+            str += ("\nSpellCost: " + SpellCost);
+            str += ("\nSpellShape: " + SpellShape);
+
+            return str; ;
+        }
+
     }
 
     public partial class SpellManager : RoomObject
@@ -85,65 +93,76 @@ namespace ProjectDuhamel.models.spells
         // Our tilemap layers for our template
         public TileMapLayer spell_effects_map_layer { get; set; }
 
+        /// <summary>
+        /// The dictionaries that contain our spell data
+        /// </summary>
         public System.Collections.Generic.Dictionary<SpellIdentifiers, SpellData> baseSpellData { get; set; } = new System.Collections.Generic.Dictionary<SpellIdentifiers, SpellData>();
         public System.Collections.Generic.Dictionary<SpellIdentifiers, BaseSpellObjectGraphics> spellObjectGraphicsDictionary { get; set; } = new System.Collections.Generic.Dictionary<SpellIdentifiers, BaseSpellObjectGraphics>();
+        public System.Collections.Generic.Dictionary<SpellIdentifiers, Vector2I[]> spellAtlasArray { get; set; } = new System.Collections.Generic.Dictionary<SpellIdentifiers, Vector2I[]>();
 
-        #region TilesetImage Vectors
+        #region TilesetImage Vectors -- Used for atast array coords
         Vector2I[] spell_firebolt_effects_tiles =
         {
             new Vector2I(0, 0),
             new Vector2I(1, 0),
             new Vector2I(2, 0)
         };
-
-
-            Vector2I[] spell_frostbolt_effects_tiles =
-            {
+        Vector2I[] spell_frostbolt_effects_tiles =
+        {
             new Vector2I(0, 1)
         };
-
-            Vector2I[] spell_lightningbolt_effects_tiles =
-            {
+        Vector2I[] spell_lightningbolt_effects_tiles =
+        {
             new Vector2I(0, 2)
         };
-
-            Vector2I[] spell_poisonbolt_effects_tiles =
+        Vector2I[] spell_poisonbolt_effects_tiles =
         {
             new Vector2I(0, 3)
         };
-
-            Vector2I[] spell_earthbolt_effects_tiles =
-            {
+        Vector2I[] spell_earthbolt_effects_tiles =
+        {
             new Vector2I(0, 4)
         };
         #endregion
 
         public SpellManager(TileMapLayer spell_effects)
         {
-                // setup our layer constants
-                spell_effects_map_layer = spell_effects;
+            // setup our layer constants
+            spell_effects_map_layer = spell_effects;
 
             LoadData();
             CreateSpellGraphics();
             CreateSpellShapeObjects();
+            CreateSpellAtlasArrays();
+        }
+
+        /// <summary>
+        /// TODO:  this needs to be done differently
+        /// The atlast array values for a given spell
+        /// </summary>
+        private void CreateSpellAtlasArrays()
+        {
+            spellAtlasArray.Clear();
+            spellAtlasArray.Add(SpellIdentifiers.SPELL_FIRE_BOLT, spell_firebolt_effects_tiles);
+            spellAtlasArray.Add(SpellIdentifiers.SPELL_LIGHTNING_BOLT, spell_lightningbolt_effects_tiles);
+            spellAtlasArray.Add(SpellIdentifiers.SPELL_POISON_BOLT, spell_poisonbolt_effects_tiles);
+            spellAtlasArray.Add(SpellIdentifiers.SPELL_FROST_BOLT, spell_frostbolt_effects_tiles);
+            spellAtlasArray.Add(SpellIdentifiers.SPELL_EARTH_BOLT, spell_earthbolt_effects_tiles);
         }
 
         private void LoadData()
         {
-            baseSpellData.Add(SpellIdentifiers.SPELL_FIRE_BOLT, new SpellData("Fire Bolt", SpellIdentifiers.SPELL_FIRE_BOLT, 1, 10, 200, 500, new Size(5, 5), 10));
-            baseSpellData.Add(SpellIdentifiers.SPELL_LIGHTNING_BOLT, new SpellData("Lightning Bolt", SpellIdentifiers.SPELL_LIGHTNING_BOLT, 1, 200, 10, 750, new Size(25, 2),10));
+            baseSpellData.Clear();
+            baseSpellData.Add(SpellIdentifiers.SPELL_FIRE_BOLT, new SpellData("Fire Bolt", SpellIdentifiers.SPELL_FIRE_BOLT, 10, 100, 200, 500, new Size(5, 5), 10));
+            baseSpellData.Add(SpellIdentifiers.SPELL_LIGHTNING_BOLT, new SpellData("Lightning Bolt", SpellIdentifiers.SPELL_LIGHTNING_BOLT, 1, 30, 200, 750, new Size(25, 2),10));
             baseSpellData.Add(SpellIdentifiers.SPELL_POISON_BOLT, new SpellData("Poison Bolt", SpellIdentifiers.SPELL_POISON_BOLT, 1, 10, 200, 300, new Size(12, 12), 10));
             baseSpellData.Add(SpellIdentifiers.SPELL_FROST_BOLT, new SpellData("Frost Bolt", SpellIdentifiers.SPELL_FROST_BOLT, 1, 10, 200, 300, new Size(16, 6), 10));
             baseSpellData.Add(SpellIdentifiers.SPELL_EARTH_BOLT, new SpellData("Earth Bolt", SpellIdentifiers.SPELL_EARTH_BOLT, 3, 15, 200, 200, new Size(20, 20), 10));
         }
 
-        private void AddData(SpellData data)
-        {
-            baseSpellData.Add(data.SpellID, data);
-        }
-
         public void CreateSpellGraphics()
         {
+            spellObjectGraphicsDictionary.Clear();
             List<BaseSpellObjectGraphics> spell_list = new List<BaseSpellObjectGraphics>();
 
             // create our spell
@@ -177,7 +196,6 @@ namespace ProjectDuhamel.models.spells
                 // create the node for the object
                 var spell_shape = new RectangleShape2D();
                 spell_shape.Size = new Vector2(data.Value.SpellSize.Width, data.Value.SpellSize.Height);
-                GD.Print("spell shape size" + spell_shape.Size);
                 data.Value.SpellShape = spell_shape;
             }
         }

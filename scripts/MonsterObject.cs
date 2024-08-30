@@ -27,9 +27,6 @@ namespace ProjectDuhamel.scripts
         public Utilities.Directions Direction { get; set; } = Utilities.Directions.DIR_NONE;
         public Vector2 DirectionUnitVector { get; set; } = new Vector2();
         public Vector2 DirectionVector { get; set; }
-
-        // the static body object (with collision and image) tied into it
-        public CharacterBody2D CharacterBodyObj { get; set; }
         public RectangleShape2D BodyShape { get; set; } = new RectangleShape2D();
 
         // the location of the tileset image
@@ -98,8 +95,31 @@ namespace ProjectDuhamel.scripts
             {
                 SetCollisionMaskValue(value, true); // and set our own
             }
+
+            // Initialize the health bars
+            var health_bar = GetNode<ProgressBar>("HealthBar/ProgressBar");
+            health_bar.MaxValue = HitPoints;  // sets the upper limit of the progress bar
+            health_bar.Value = HitPoints; // sets the current limit of the progress bar
+            health_bar.MinValue = 0; // set the lower bound of the progress bar
+            UpdateHealthBar();
         }
 
+        public void UpdateHealthBar()
+        {
+            var health_bar = GetNode<ProgressBar>("HealthBar/ProgressBar");
+
+            // hide the health bars if full health
+            if(health_bar.MaxValue == HitPoints)
+            {
+                health_bar.Visible = false;
+            } else
+            {
+                health_bar.Visible = true;
+            }
+
+            // set the current value
+            health_bar.Value = HitPoints;
+        }
 
 
 
@@ -179,7 +199,7 @@ namespace ProjectDuhamel.scripts
                 }
                 else if (collision.GetCollider() is Player)
                 {
-                    GD.Print("Monster hit a monster");
+                    GD.Print("Monster hit a player");
                 }
                 else
                 {
@@ -190,7 +210,7 @@ namespace ProjectDuhamel.scripts
             }
         }
 
-        internal void TakeDamage(int v)
+        public void TakeDamage(int v)
         {
             GD.Print("Monster took damage of " + v + " points");
             this.HitPoints -= v;
@@ -199,6 +219,8 @@ namespace ProjectDuhamel.scripts
                 GD.Print("Monster died");
                 this.QueueFree();
             }
+
+            UpdateHealthBar();
         }
     }
 }

@@ -54,6 +54,8 @@ public partial class LevelTemplate : Node2D
 
     PackedScene RoomObjectScene = GD.Load<PackedScene>("res://scenes/room_object.tscn");
     PackedScene MonsterObjectScene = GD.Load<PackedScene>("res://scenes/monster_object.tscn");
+    PackedScene SpellObjectScene = GD.Load<PackedScene>("res://scenes/spell_object.tscn");
+
 
 
     public enum WallDirections
@@ -502,12 +504,8 @@ public partial class LevelTemplate : Node2D
         char_body.SetCollisionMaskValue((int)CollisionLayerAssignments.MONSTERS, true);  // assign to proper layer
         char_body.SetCollisionMaskValue((int)CollisionLayerAssignments.PLAYER, true);  // assign to proper layer
 
-
-
         // add the boundary object to the intended scene
         scene.AddChild(char_body);
-
-
     }
 
     // Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -609,8 +607,8 @@ public partial class LevelTemplate : Node2D
         //GD.Print("direction vector of spell: " + new_room.DirectionVector.ToString());
 
 
-        Node2D Rooms = GetNode("MonsterObjects") as Node2D;
-        Rooms.AddChild(new_monster_obj);
+        Node2D monsters = GetNode("MonsterObjects") as Node2D;
+        monsters.AddChild(new_monster_obj);
     }
 
 
@@ -645,10 +643,11 @@ public partial class LevelTemplate : Node2D
             GD.Print("earth selected");
         }
 
-        BaseSpellObjectGraphics new_spell = spellManager.spellObjectGraphicsDictionary[spell_id];
-        GD.Print("spell_id: " + spell_id.ToString());
+        BaseSpellObjectGraphics spell_graphics = spellManager.spellObjectGraphicsDictionary[spell_id];
+        SpellData spell_data = spellManager.baseSpellData[spell_id];
 
-        new_spell.Name = spell_id.ToString() + Guid.NewGuid().ToString().Substring(0, 5);
+        // Create a unique name for the spell object
+        spell_graphics.Name = spell_id.ToString() + Guid.NewGuid().ToString().Substring(0, 5);
 
         // which item type is this?
         int[] layer_bits = { (int)CollisionLayerAssignments.SPELLS_FRIENDLY };
@@ -663,42 +662,32 @@ public partial class LevelTemplate : Node2D
         // Need better logic here.  
         if(player.FacingUnitVector == Vector2.Zero)
         {
-            new_spell.DirectionUnitVector = new Vector2(0, -1);
+            spell_graphics.DirectionUnitVector = new Vector2(0, -1);
         } else
         {
-            new_spell.DirectionUnitVector = player.FacingUnitVector;
+            spell_graphics.DirectionUnitVector = player.FacingUnitVector;
         }
 
         // set the position of the spell object
-        new_spell.Position = player.Position;
-
-        // retrieve data values from the spell manager for this spell type
-        var spell_speed = (spellManager.baseSpellData[new_spell.ID]).SpellSpeed;
-        var spell_shape = (spellManager.baseSpellData[new_spell.ID]).SpellShape;
-        var graphics_layer = (spellManager.spellObjectGraphicsDictionary[new_spell.ID]).GraphicsLayer;
-        var tile_set_source_id = (spellManager.spellObjectGraphicsDictionary[new_spell.ID]).TileSetSourceId;
-        var atlas_coord_array = (spellManager.spellObjectGraphicsDictionary[new_spell.ID]).AtlasCoordArray;
-        var asset_path = (spellManager.spellObjectGraphicsDictionary[new_spell.ID]).AssetPath;
-
+        spell_graphics.Position = player.Position;
 
         // instantiate the room and initialize its values.
         // Must call Initialize() with the initial values since the scene constructor is parameterless.
-        RoomObject new_room_object = RoomObjectScene.Instantiate() as RoomObject;
-        new_room_object.Initialize(
-            new_spell.Name,
-            new_spell.Position,
-            spell_speed,
-            graphics_layer,
-            tile_set_source_id,
-            atlas_coord_array,
-            new_spell.DirectionUnitVector,
-            spell_shape,
-            asset_path,
+        SpellObject new_spell_object = SpellObjectScene.Instantiate() as SpellObject;
+
+        new_spell_object.Initialize(
+            spell_graphics.Name,
+            spell_graphics.Position,
+            spell_data,
+            spell_graphics,
+            spell_graphics.DirectionUnitVector,
             layer_bits,
             mask_bits
         );
 
-        new_room_object.Velocity = new_spell.Velocity;
+        GD.Print(spell_data.ToString());
+
+        new_spell_object.Velocity = spell_data.SpellSpeed * spell_graphics.DirectionUnitVector;
 
 
 
@@ -717,8 +706,8 @@ public partial class LevelTemplate : Node2D
         //GD.Print("direction vector of spell: " + new_room.DirectionVector.ToString());
 
 
-        Node2D Rooms = GetNode("RoomObjects") as Node2D;
-        Rooms.AddChild(new_room_object);
+        Node2D Rooms = GetNode("SpellObjects") as Node2D;
+        Rooms.AddChild(new_spell_object);
     }
 
     public void _on_monster_spawn_timer_timeout()
@@ -733,6 +722,6 @@ public partial class LevelTemplate : Node2D
             var rand_pos_y = rng.RandiRange(0, 200);
             ConjureMonster(new Vector2(rand_pos_x, rand_pos_y));
         }
-        GD.Print("spawing a monster");
+        GD.Print("spawning a monster");
     }
 }
