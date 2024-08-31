@@ -1,4 +1,5 @@
 using Godot;
+using ProjectDuhamel.models.monsters;
 using ProjectDuhamel.scripts;
 using System;
 using static Utilities;
@@ -15,7 +16,9 @@ public partial class Player : CharacterBody2D
     private bool IsMoving = true; // default state is true
 
     // Player specific
-    public int HitPoints { get; set; } = 50;
+    public int HitPoints { get; set; } = 250;
+    public int Experience { get; set; } = 0;
+    public int[] KillHistory { get; set; } = new int[6] { 0, 0, 0, 0, 0, 0 };
 
     /// <summary>
     /// Directional information for the player
@@ -30,6 +33,22 @@ public partial class Player : CharacterBody2D
 	{
         if (Input.IsActionJustPressed("left_click"))
         {
+            // assign our target destination click
+            TargetDestinationPosition = GetGlobalMousePosition();
+
+            // determine the direction and velocity from current player position to the target destination
+            DirectionVector = GlobalPosition.DirectionTo(TargetDestinationPosition);
+            DirectionUnitVector = DirectionVector.Normalized();
+            FacingUnitVector = DirectionVector.Normalized();
+            Direction = Utilities.GetDirection_9WAY(DirectionVector);
+
+            // ser our velocity
+            Velocity = new Vector2(0, 0);
+
+            GD.Print("left click DV: " + DirectionVector);
+        }
+        if (Input.IsActionJustPressed("right_click"))
+        {
             IsMoving = true;
 
             // assign our target destination click
@@ -40,11 +59,9 @@ public partial class Player : CharacterBody2D
             DirectionUnitVector = DirectionVector.Normalized();
             FacingUnitVector = DirectionVector.Normalized();
             Direction = Utilities.GetDirection_9WAY(DirectionVector);
-            
+
             // ser our velocity
             Velocity = DirectionVector * _speed;
-
-            GD.Print("left click DV: " + DirectionVector);
         }
     }
 
@@ -110,7 +127,7 @@ public partial class Player : CharacterBody2D
         if(collision_info != null)
         {
             IsMoving = false;
-            GD.Print("Player collided at " + GlobalPosition);
+           // GD.Print("Player collided at " + GlobalPosition);
             Velocity = new Vector2(0, 0);
             DirectionVector = new Vector2(0,0);
             DirectionUnitVector = DirectionVector.Normalized();
@@ -121,11 +138,35 @@ public partial class Player : CharacterBody2D
             if (collision_info.GetCollider() is MonsterObject)
             {
                 GD.Print("Player object hit a monster: " + ((Node)collision_info.GetCollider()).Name);
-                GD.Print("Player object hit a monster: " + ((Node)collision_info.GetCollider()));
+                //GD.Print("Player object hit a monster: " + ((Node)collision_info.GetCollider()));
 
                 // Damage the monster
                 var monster_obj = (MonsterObject)collider_obj;
+                var monster_data = monster_obj.monsterData.Copy();  // copy the data in case the monster dies in the next line
+
+                // this line can kill the mosnter and remove it from gam
                 monster_obj.TakeDamage(_bare_damage);
+
+
+                // check if we killed the monster
+                if (monster_obj == null || monster_obj.monsterData.MonsterHitPoints <= 0)
+                {
+                    GD.Print("player killed the monster");
+                    GD.Print("exp earned: " + monster_data.MonsterExp);
+
+                    this.Experience += monster_data.MonsterExp;
+                    int index = (int)monster_data.MonsterRank;
+                    GD.Print("index: " + index + "    Rank killed: "+ monster_data.MonsterRank);
+                    
+                    GD.Print("Experience: " + this.Experience);
+                    GD.Print("Kill history[index]: " + this.KillHistory[index]);
+                    GD.Print("FullKill history: " + this.KillHistory[0] + "," + this.KillHistory[1] + "," + 
+                        this.KillHistory[2] + "," + this.KillHistory[3] + "," + this.KillHistory[4]);
+
+                    UpdateExperienceAndHistory_FromMonsterKill(monster_data);
+
+                }
+
             }
             else if (collision_info.GetCollider() is RoomObject)
             {
@@ -133,7 +174,7 @@ public partial class Player : CharacterBody2D
             }
             else if (collision_info.GetCollider() is Player)
             {
-                GD.Print("Player object hit a monster");
+                GD.Print("Player object hit a player");
             }
             else
             {
@@ -149,18 +190,37 @@ public partial class Player : CharacterBody2D
         UpdateHealthBar();
     }
 
-    public void TakeDamage(int v)
+    public void TakeDamage(int v, MonsterData monsterData)
     {
         GD.Print("Monster took damage of " + v + " points");
         this.HitPoints -= v;
         if (HitPoints <= 0)
         {
-            GD.Print("Player died");
-            GetTree().Paused = true;
-
+            Die(monsterData);
         }
 
         UpdateHealthBar();
+    }
+
+    /// <summary>
+    /// Function called when a monster kills the player
+    /// </summary>
+    /// <param name="monsterData"></param>
+    public void Die(MonsterData monsterData)
+    {
+        GD.Print("Player has died");
+
+        GD.Print("GAME OVER");
+        GD.Print("Experience: " + Experience.ToString());
+        GD.Print("Kill history: ");
+        GD.Print("----------------------");
+
+        for (int i = 0; i < KillHistory.Length; i++)
+        {
+            GD.Print(monsterData.MonsterRankNames[i] + ": " + KillHistory[i].ToString());
+        }
+
+        GetTree().Paused = true;
     }
 
     public void UpdateHealthBar()
@@ -179,5 +239,21 @@ public partial class Player : CharacterBody2D
 
         // set the current value
         health_bar.Value = HitPoints;
+    }
+
+    public void UpdateExperienceAndHistory_FromMonsterKill(MonsterData monster_data)
+    {
+        GD.Print("player killed the monster");
+        GD.Print("exp earned: " + monster_data.MonsterExp);
+
+        this.Experience += monster_data.MonsterExp;
+        int index = (int)monster_data.MonsterRank;
+        GD.Print("index: " + index + "    Rank killed: " + monster_data.MonsterRank);
+
+        this.KillHistory[(int)monster_data.MonsterRank] = this.KillHistory[(int)monster_data.MonsterRank] + 1;
+        GD.Print("Experience: " + this.Experience);
+        GD.Print("Kill history[index]: " + this.KillHistory[index]);
+        GD.Print("FullKill history: " + this.KillHistory[0] + "," + this.KillHistory[1] + "," +
+            this.KillHistory[2] + "," + this.KillHistory[3] + "," + this.KillHistory[4]);
     }
 }

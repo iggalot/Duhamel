@@ -7,9 +7,7 @@ namespace ProjectDuhamel.scripts
 {
     public partial class MonsterObject : CharacterBody2D
     {
-        // Monster specific
-        public int HitPoints { get; set; } = 10;
-
+        bool CanAttackAgain { get; set; } = true;
         // monster data for this monster
         public MonsterData monsterData { get; set; }
         public BaseMonsterObjectGraphics monsterGraphics { get; set; } = new BaseMonsterObjectGraphics();
@@ -62,6 +60,8 @@ namespace ProjectDuhamel.scripts
             // Set the sprite texture
             Sprite2D sprite = GetNode<Sprite2D>("MonsterObjectSprite");
             sprite.Texture = monsterGraphics.GetTextureRandom();
+            // scale the sprite to appropriate size using out monster size factor
+            sprite.Scale = new Vector2(monsterData.MonsterScaleFactor, monsterData.MonsterScaleFactor);
             sprite.Centered = true;
 
 
@@ -100,15 +100,17 @@ namespace ProjectDuhamel.scripts
 
             // Initialize the health bars
             var health_bar = GetNode<ProgressBar>("HealthBar/ProgressBar");
-            health_bar.MaxValue = HitPoints;  // sets the upper limit of the progress bar
-            health_bar.Value = HitPoints; // sets the current limit of the progress bar
+            health_bar.MaxValue = monsterData.MonsterHitPoints;  // sets the upper limit of the progress bar
+            health_bar.Value = monsterData.MonsterHitPoints; // sets the current limit of the progress bar
             health_bar.MinValue = 0; // set the lower bound of the progress bar
             UpdateHealthBar();
+
+
         }
 
         public override void _Ready()
         {
-           
+               
         }
 
         public override void _PhysicsProcess(double delta)
@@ -128,26 +130,65 @@ namespace ProjectDuhamel.scripts
 
                 if (collision.GetCollider() is MonsterObject)
                 {
-                    GD.Print("Monster hit a monster");
+                    //GD.Print("Monster hit a monster");
                 }
                 else if (collision.GetCollider() is RoomObject)
                 {
                     GD.Print("Monster hit a room object");
+                    this.QueueFree();
                 }
                 else if (collision.GetCollider() is Player)
                 {
-                    var player_obj = (Player)collider_obj;
-                    int dam = Utilities.GetRandomNumber(monsterData.MonsterMinDamage, monsterData.MonsterMaxDamage);
-                    player_obj.TakeDamage(dam);
+                    // check if we can attack again or not -- waiting for the cooldown timer to clear this flag
+                    if (CanAttackAgain == true)
+                    {
+                        var player_obj = (Player)collider_obj;
+                        int dam = Utilities.GetRandomNumber(monsterData.MonsterMinDamage, monsterData.MonsterMaxDamage);
+                        player_obj.TakeDamage(dam, this.monsterData);
 
-                    GD.Print("Monster hit a player for " + dam + " damage");
+                        GD.Print(this.monsterData.MonsterRank.ToString() + " monster hit a player for " + dam + " damage");
+                        SetSkillCooldownTimer(monsterData.MonsterAttackSpeed);
+                    } else
+                    {
+                        GD.Print("Monster can't attack again yet");
+                    }
+                    CanAttackAgain = false;
+                } else if (collision.GetCollider() is SpellObject)
+                {
+                    // check if we can attack again or not -- waiting for the cooldown timer to clear this flag
+                    if (CanAttackAgain == true)
+                    {
+                        var spell_obj = (SpellObject)collider_obj;
+                        int dam = Utilities.GetRandomNumber(spell_obj.spellData.SpellMinDamage, spell_obj.spellData.SpellMaxDamage);
+                        TakeDamage(dam);
+
+                        GD.Print(this.monsterData.MonsterRank.ToString() + " monster was hit by a spell for " + dam + " damage");
+
+                        SetSkillCooldownTimer(monsterData.MonsterAttackSpeed);
+                    }
+                    else
+                    {
+                        GD.Print("Monster can't attack again yet");
+                    }
+                    CanAttackAgain = false;
+
+                    // check if we killed the monster
+                    if (monsterData.MonsterHitPoints <= 0)
+                    {
+                        Player player = GetNode<Player>("..");
+
+                        GD.Print("spell killed the monster");
+                        player.UpdateExperienceAndHistory_FromMonsterKill(monsterData);
+
+                        // then free the monster node from memory
+                        QueueFree();
+                    }
                 }
                 else
                 {
-                    GD.Print("Monster hit something else");
+                    this.QueueFree();
+                    //GD.Print("Monster hit something else");
                 }
-
-                this.QueueFree();
             }
 
             UpdateHealthBar();
@@ -156,12 +197,11 @@ namespace ProjectDuhamel.scripts
         public void TakeDamage(int v)
         {
             GD.Print("Monster took damage of " + v + " points");
-            this.HitPoints -= v;
-            if (HitPoints <= 0)
+            this.monsterData.MonsterHitPoints -= v;
+            if (monsterData.MonsterHitPoints <= 0)
             {
-                GD.Print("Monster died");
+               //GD.Print("Monster died");
                 this.QueueFree();
-
             }
 
             UpdateHealthBar();
@@ -172,7 +212,7 @@ namespace ProjectDuhamel.scripts
             var health_bar = GetNode<ProgressBar>("HealthBar/ProgressBar");
 
             // hide the health bars if full health
-            if (health_bar.MaxValue == HitPoints)
+            if (health_bar.MaxValue == monsterData.MonsterHitPoints)
             {
                 health_bar.Visible = false;
             }
@@ -182,8 +222,39 @@ namespace ProjectDuhamel.scripts
             }
 
             // set the current value
-            health_bar.Value = HitPoints;
+            health_bar.Value = monsterData.MonsterHitPoints;
         }
+
+        public void _on_monster_cooldown_timer_timeout()
+        {
+            var attack_speed_timer = GetNode<Timer>("AttackSpeedTimer");
+            GD.Print("Attack speed timer timeout wait time: " + attack_speed_timer.WaitTime);
+            EndSkillCooldownTimer();
+        }
+
+        /// <summary>
+        /// Starts the time for the attack speed
+        /// </summary>
+        /// <param name="speed"></param>
+        private void SetSkillCooldownTimer(float attack_speed)
+        {
+            this.CanAttackAgain = false;
+            GD.Print("Setting skill cooldown timer for " + attack_speed * 0.5f + " seconds");
+            // Set the attack speed timer parameters
+            var attack_speed_timer = GetNode<Timer>("AttackSpeedTimer");
+            attack_speed_timer.WaitTime = attack_speed * 0.1f;
+            attack_speed_timer.Start();
+        }
+
+        private void EndSkillCooldownTimer()
+        {
+            this.CanAttackAgain = true;
+            GD.Print("Ending skill cooldown timer");
+            var attack_speed_timer = GetNode<Timer>("AttackSpeedTimer");
+            attack_speed_timer.Stop();
+        }
+
+
     }
 }
 

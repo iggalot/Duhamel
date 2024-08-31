@@ -49,6 +49,10 @@ public enum CollisionMaskAssignments
 
 public partial class LevelTemplate : Node2D
 {
+    // constant that sets the limits for how close something can spawn near another object
+    private const float DEFAULT_SPAWN_MIN_SAFE_DIST = 100.0f;
+
+
     SpellManager spellManager { get; set; }
     MonsterManager monsterManager { get; set; }
 
@@ -456,13 +460,13 @@ public partial class LevelTemplate : Node2D
             ConjureSpell(player);
         }
 
-        // Testing for player input for shooting and conjuring monsters
-        if (Input.IsActionJustPressed("right_click"))
-        {
-            ConjureMonster(player, new Vector2(25, 25));
-            ConjureMonster(player, new Vector2(25, 75));
-            ConjureMonster(player, new Vector2(25, 125));
-        }
+        //// Testing for player input for shooting and conjuring monsters
+        //if (Input.IsActionJustPressed("right_click"))
+        //{
+        //    ConjureMonster(player, new Vector2(25, 25));
+        //    ConjureMonster(player, new Vector2(25, 75));
+        //    ConjureMonster(player, new Vector2(25, 125));
+        //}
     }
 
     private void ConjureMonster(Player player, Vector2 position)
@@ -470,7 +474,7 @@ public partial class LevelTemplate : Node2D
         MonsterIdentifiers monster_id = MonsterIdentifiers.MONSTER_RACE_SKELETON;
 
         BaseMonsterObjectGraphics monster_graphics = monsterManager.monsterObjectGraphicsDictionary[monster_id];
-        MonsterData monster_data = monsterManager.baseMonsterData[monster_id];
+        var monster_data =monsterManager.CreateSingleMonsterData(monster_id);
 
         // Create a unique name for the spell object
         monster_graphics.Name = monster_id.ToString() + Guid.NewGuid().ToString().Substring(0, 5);
@@ -642,12 +646,69 @@ public partial class LevelTemplate : Node2D
 
         Player player = GetNode<Player>("Player") as Player;
 
+        // spawn a random number of enemies
         for (int i = 0; i < rand_number; i++)
         {
             var rand_pos_x = rng.RandiRange(25, 200);
             var rand_pos_y = rng.RandiRange(0, 200);
-            ConjureMonster(player, new Vector2(rand_pos_x, rand_pos_y));
+            var new_spawn_pt = new Vector2(rand_pos_x, rand_pos_y);
+
+            if (CheckSpawnIsTooClose(DEFAULT_SPAWN_MIN_SAFE_DIST, new_spawn_pt) is false)
+            {
+                ConjureMonster(player, new Vector2(rand_pos_x, rand_pos_y));
+            }
         }
-        GD.Print("spawning a monster");
+        //GD.Print("spawning a monster");
+    }
+
+    /// <summary>
+    /// A function to help determine the distance between a spawn point and a player / room / or monster
+    /// </summary>
+    /// <param name="min_safe_dist"></param>
+    /// <returns></returns>
+    private bool CheckSpawnIsTooClose(float min_safe_dist, Vector2 spawn_point)
+    {
+        // get our player and  monster and room object holders
+        Player player = GetNode<Player>("Player") as Player;
+        Node2D monster_objs = GetNode("MonsterObjects") as Node2D;
+        Node2D room_objs = GetNode("RoomObjects") as Node2D;
+
+        var dist_to_player = Math.Abs(player.GlobalPosition.DistanceTo(spawn_point));
+
+        // check distance to player
+        bool too_close = false;
+        if (dist_to_player < min_safe_dist)
+        {
+            too_close = true;
+            GD.Print("too close to player -- skipping this spawn");
+        }
+
+        // check distances to all room objects
+        for (int j = 0; j < room_objs.GetChildCount(); j++)
+        {
+            var room_obj = room_objs.GetChild(j) as RoomObject;
+            var dist_to_room_obj = Math.Abs(room_obj.GlobalPosition.DistanceTo(spawn_point));
+            if (dist_to_room_obj < min_safe_dist)
+            {
+                too_close = true;
+                GD.Print("too close to ro0m object -- skipping this spawn");
+                break;
+            }
+        }
+
+        // check distance to all monster objects
+        for (int j = 0; j < monster_objs.GetChildCount(); j++)
+        {
+            var monster_obj = monster_objs.GetChild(j) as MonsterObject;
+            var dist_to_monster_obj = Math.Abs(monster_obj.GlobalPosition.DistanceTo(spawn_point));
+            if (dist_to_monster_obj < min_safe_dist)
+            {
+                too_close = true;
+                GD.Print("too close to monster object -- skipping this spawn");
+                break;
+            }
+        }
+
+        return too_close;
     }
 }

@@ -11,3 +11,7 @@ script = ExtResource("1_wejv5")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 
 [node name="HealthBar" parent="." instance=ExtResource("2_ojtf1")]
+
+[node name="AttackSpeedTimer" type="Timer" parent="."]
+
+[connection signal="timeout" from="AttackSpeedTimer" to="." method="_on_monster_cooldown_timer_timeout"]

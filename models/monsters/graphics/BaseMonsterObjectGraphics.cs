@@ -13,6 +13,8 @@ namespace ProjectDuhamel.models.monsters
         // The tilemape layer that the graphic will be drawn on.
         public TileMapLayer GraphicsLayer { get; set; } = null;
 
+        public float ScaleFactor { get; set; } = 1.0f;
+
         /// <summary>
         /// Parameterless constructor
         /// </summary>
@@ -55,7 +57,9 @@ namespace ProjectDuhamel.models.monsters
             {
                 GD.Print("Error loading image: " + error);
             }
-            loaded_image.GetRegion(new Rect2I(16, 16, 16, 16));
+            // try and resize the image?
+            loaded_image.GetRegion(new Rect2I(0, 0, 16, 16));
+
 
             var texture = new ImageTexture();
             texture.SetImage(loaded_image);
@@ -69,17 +73,18 @@ namespace ProjectDuhamel.models.monsters
                 // 3. set the new atlas_texture's image atlas to the texture we loaded
                 atlas_texture.Atlas = texture;
 
-                // 4. get the sub region within the atlast texture based on the coordinate in the atlast image --
+                // 4. get the sub region within the atlast texture based on the coordinate in the atlas image --
                 //    if there is more than one sub region, this will be a random one
 
                 var region = new Rect2(AtlasCoordArray[i].X * 16, AtlasCoordArray[i].Y * 16, 16, 16);
                 atlas_texture.Region = region;
-                GD.Print("atlas_texture" + atlas_texture);
+                
+                //GD.Print("atlas_texture" + atlas_texture);
 
                 temp_list.Add(atlas_texture);
             }
 
-            GD.Print("temp_list: " + temp_list.Count);
+            //GD.Print("temp_list: " + temp_list.Count);
 
             return temp_list;
         }
