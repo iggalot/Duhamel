@@ -2,6 +2,8 @@ using Godot;
 using ProjectDuhamel.models.monsters;
 using ProjectDuhamel.scripts;
 using System;
+using System.ComponentModel.Design;
+using System.Security.Cryptography.X509Certificates;
 using static Utilities;
 
 public partial class Player : CharacterBody2D
@@ -188,6 +190,95 @@ public partial class Player : CharacterBody2D
 
         // update the health bar
         UpdateHealthBar();
+
+        // animate our sprite
+        DoSpriteAnimation(true);
+    }
+
+    private void DoSpriteAnimation(bool is_moving = true)
+    {
+        string animation_string = "";
+        GD.Print("in DoSpriteAnimation");
+
+        if(is_moving is true)
+        //if (is_moving == true)
+        {
+
+            switch (Direction)
+            {
+                case Directions.DIR_NONE:
+                    {
+                        animation_string = "idle_front";
+                        break;
+                    }
+                case Directions.DIR_NORTH:
+                    {
+                        animation_string = "walk_back";
+                        break;
+                    }
+                case Directions.DIR_SOUTH:
+                    {
+                        animation_string = "walk_front";
+                        break;
+                    }
+                case Directions.DIR_WEST:
+                    {
+                        animation_string = "walk_left";
+                        break;
+                    }
+                case Directions.DIR_EAST:
+                    {
+                        animation_string = "walk_right";
+                        break;
+                    }
+                default:
+                    {
+                        animation_string = "idle_front";
+                        break;
+                    }
+            }
+        }
+        else
+        {
+            switch (Direction)
+            {
+                case Directions.DIR_NONE:
+                    {
+                        animation_string = "idle_front";
+                        break;
+                    }
+                case Directions.DIR_NORTH:
+                    {
+                        animation_string = "idle_back";
+                        break;
+                    }
+                case Directions.DIR_SOUTH:
+                    {
+                        animation_string = "idle_front";
+                        break;
+                    }
+                case Directions.DIR_WEST:
+                    {
+                        animation_string = "idle_left";
+                        break;
+                    }
+                case Directions.DIR_EAST:
+                    {
+                        animation_string = "idle_right";
+                        break;
+                    }
+                default:
+                    {
+                        animation_string = "idle_front";
+                        break;
+                    }
+            }
+        }
+
+        GD.Print("animation_string: " + animation_string);
+
+        var animated_sprite = GetNode<AnimatedSprite2D>("AnimatedSprite2D");
+        animated_sprite.Play(animation_string);
     }
 
     public void TakeDamage(int v, MonsterData monsterData)
