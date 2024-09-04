@@ -1,15 +1,24 @@
 using Godot;
+using ProjectDuhamel.models.inventory;
 using ProjectDuhamel.models.monsters;
 using ProjectDuhamel.scripts;
 using System;
-using System.ComponentModel.Design;
-using System.Security.Cryptography.X509Certificates;
 using static Utilities;
 
 public partial class Player : CharacterBody2D
 {
+    private const int DEFAULT_INV_SIZE = 10;
 	public const float _speed = 200.0f;
     public const int _bare_damage = 4;
+
+    public AnimatedSprite2D AnimatedSprite { get; set; } = null;
+    public CanvasLayer UIInteract { get; set; } = null;
+    public CanvasLayer UIInventory { get; set; } = null;
+
+    /// <summary>
+    /// The inventory of objects for this player
+    /// </summary>
+    public Inventory PlayerInventory { get; set; } = new Inventory(DEFAULT_INV_SIZE);
 
     private Vector2 TargetDestinationPosition = new Vector2();
 
@@ -31,8 +40,139 @@ public partial class Player : CharacterBody2D
     public Vector2 FacingUnitVector { get; set; } = new Vector2();   // the direction our character is facing .... equal to the last moving direction.
 
 
+    public override void _Input(InputEvent input_event)
+    {
+        if (input_event.IsActionPressed("ui_inventory"))
+        {
+            GD.Print("opening inventory");
+
+            // instantiate the inventory scene
+            //PackedScene inv_scene = GD.Load<PackedScene>("res://scenes/inventory_ui.tscn");
+            //Node inv_instance = inv_scene.Instantiate();
+            //AddChild(inv_instance);
+            //inv_instance.Name = "UI for Inventory";
+
+            CanvasLayer ui = GetNode<CanvasLayer>("InventoryUI");
+
+            Control ui_control = GetNode<Control>("InventoryUI/ColorRect/Inventory_UI");
+
+
+            Label ui_label = ui.GetNode<Label>("ColorRect/Label");
+            ui.Visible = !ui.Visible;  // toggle the visibility of the inventory
+
+            // now add a item slot to the inventory window
+
+            
+            InventorySlot slot = new InventorySlot();
+
+            PackedScene slot_scene = GD.Load<PackedScene>("res://scenes/inventory_slot.tscn");
+            Node slot_instance = slot_scene.Instantiate();
+            Node slot_instance2 = slot_scene.Instantiate();
+            Node slot_instance3 = slot_scene.Instantiate();
+            Node slot_instance4 = slot_scene.Instantiate();
+            Node slot_instance5 = slot_scene.Instantiate();
+            Node slot_instance6 = slot_scene.Instantiate();
+            Node slot_instance7 = slot_scene.Instantiate();
+            Node slot_instance8 = slot_scene.Instantiate();
+            Node slot_instance9 = slot_scene.Instantiate();
+            Node slot_instance10 = slot_scene.Instantiate();
+
+
+            slot_instance.Name = "Slot 1";
+            slot_instance2.Name = "Slot 2";
+            slot_instance3.Name = "Slot 3";
+            slot_instance4.Name = "Slot 4";
+            slot_instance5.Name = "Slot 5";
+            slot_instance6.Name = "Slot 6";
+            slot_instance7.Name = "Slot 7";
+            slot_instance8.Name = "Slot 8";
+            slot_instance9.Name = "Slot 9";
+            slot_instance10.Name = "Slot 10";
+
+
+
+            ui_control.Scale = new Vector2(0.5f, 0.5f);
+
+            Label label1 = slot_instance.GetNode<Label>("DetailsPanel/ItemName");
+            label1.Text = "item 1";
+            Label label2 = slot_instance2.GetNode<Label>("DetailsPanel/ItemName");
+            label2.Text = "item 2";
+            Label label3 = slot_instance3.GetNode<Label>("DetailsPanel/ItemName");
+            label3.Text = "item 3";
+            Label label4 = slot_instance4.GetNode<Label>("DetailsPanel/ItemName");
+            label4.Text = "item 4";
+            Label label5 = slot_instance5.GetNode<Label>("DetailsPanel/ItemName");
+            label5.Text = "item 5";
+            Label label6 = slot_instance6.GetNode<Label>("DetailsPanel/ItemName");
+            label6.Text = "item 6";
+            Label label7 = slot_instance7.GetNode<Label>("DetailsPanel/ItemName");
+            label7.Text = "item 7";
+            Label label8 = slot_instance8.GetNode<Label>("DetailsPanel/ItemName");
+            label8.Text = "item 8";
+            Label label9 = slot_instance9.GetNode<Label>("DetailsPanel/ItemName");
+            label9.Text = "item 9";
+            Label label10 = slot_instance10.GetNode<Label>("DetailsPanel/ItemName");
+            label10.Text = "item 10";
+
+            GridContainer container = ui_control.GetNode<GridContainer>("GridContainer");
+            container.AddChild(slot_instance);
+            container.AddChild(slot_instance2);
+            container.AddChild(slot_instance3);
+            container.AddChild(slot_instance4);
+            container.AddChild(slot_instance5);
+            container.AddChild(slot_instance6);
+            container.AddChild(slot_instance7);
+            container.AddChild(slot_instance8);
+            container.AddChild(slot_instance9);
+            container.AddChild(slot_instance10);
+
+            //Node root_node = GetTree().GetRoot();
+            //Node2D level = root_node.GetNode<Node2D>("LevelTemplate");
+            //level.AddChild(inv_instance);
+
+            //            Node inv_instance = inv_scene.Instantiate();
+            //            GridContainer grid_cont = inv_instance.GetNode<GridContainer>("GridContainer");
+
+            ////            for (int i = 0; i < PlayerInventory.InventoryItems.Length; i++)
+            ////            {
+            // //               if (PlayerInventory.InventoryItems[i] != null)
+            // //               {
+            // //                   GD.Print(PlayerInventory.InventoryItems[i].ItemName);
+            //                    Node slot_instance =slot_scene.Instantiate();
+            //                    Node item_instance = item_scene.Instantiate();
+
+            //                    InventoryItem item = new InventoryItem();
+            //                    item.ItemName = "test item";
+            //                    item.ItemEffect = "test effect";
+            //                    item.ItemType = "test type";
+
+            //                    var label1 = slot_instance.GetNode<Label>("InnerBorder/ItemQuantity");
+            //                    label1.Text = "1";
+            //                    var det_label1 = slot_instance.GetNode<Label>("DetailsPanel/ItemName");
+            //                    det_label1.Text = item.ItemName;
+            //                    var det_label2 = slot_instance.GetNode<Label>("DetailsPanel/ItemEffect");
+            //                    det_label2.Text = item.ItemEffect;
+            //                    var det_label3 = slot_instance.GetNode<Label>("DetailsPanel/ItemType");
+            //                    det_label3.Text = item.ItemType;
+
+            //                    grid_cont.AddChild(slot_instance);
+
+            //                    UIInventory.Visible = !UIInventory.Visible;
+            // //               }
+            ////            }
+
+
+
+            GetTree().Paused = !GetTree().Paused;
+        }
+    }
     private void GetInput()
 	{
+        // based WASD movement
+        DirectionUnitVector = Input.GetVector("ui_left", "ui_right", "ui_up", "ui_down");
+        FacingUnitVector = DirectionUnitVector;
+        Velocity = DirectionUnitVector * _speed;
+
         if (Input.IsActionJustPressed("left_click"))
         {
             // assign our target destination click
@@ -69,6 +209,14 @@ public partial class Player : CharacterBody2D
 
     public override void _Ready()
     {
+        // set the global player reference noe as this player
+        GlobalScripts.SetPlayerReference(this);
+
+        // set the animated sprite and interact ui nodes for this player
+        AnimatedSprite = GetNode<AnimatedSprite2D>("AnimatedSprite2D");
+        UIInteract = GetNode<CanvasLayer>("InteractUI");
+        UIInventory = GetNode<CanvasLayer>("InventoryUI");
+
         GlobalPosition = new Vector2(150, 100);
 
         // set our initial player vectors
@@ -103,35 +251,40 @@ public partial class Player : CharacterBody2D
         // or if we should move
         GetInput();
 
+        MoveAndCollide(Velocity * (float)delta);
+        DirectionUnitVector = (1.0f / _speed) * Velocity;
+        DirectionVector = DirectionUnitVector;
+
         // compute the current distance of the player from the target destination point
         var distance = GlobalPosition.DistanceSquaredTo(TargetDestinationPosition);
 
-        // update the direction of our char.
-        Direction = Utilities.GetDirection_9WAY(DirectionVector);
+        //// update the direction of our char.
+        Direction = Utilities.GetDirection_9WAY(DirectionUnitVector);
 
         KinematicCollision2D collision_info = null;
 
-        if (Math.Sqrt(distance) > 3)
+        //if (Math.Sqrt(distance) > 3)
+        //{
+        //    // continue moving the character  for this frame
+        //    collision_info = MoveAndCollide(Velocity * (float)delta);
+        //    IsMoving = true;
+        //}
+        //else
+        //{
+        //    //GD.Print("Player is at target destination at " + GlobalPosition);
+        //    IsMoving = false;
+        //    Velocity = new Vector2(0, 0);
+        //    DirectionVector = new Vector2(0, 0);
+        //    DirectionUnitVector = DirectionVector.Normalized();
+        //    TargetDestinationPosition = GlobalPosition;
+        //}
+
+        if (collision_info != null)
         {
-            // continue moving the character  for this frame
-            collision_info = MoveAndCollide(Velocity * (float)delta);
-            IsMoving = true;
-        } else
-        {
-            //GD.Print("Player is at target destination at " + GlobalPosition);
             IsMoving = false;
+            // GD.Print("Player collided at " + GlobalPosition);
             Velocity = new Vector2(0, 0);
             DirectionVector = new Vector2(0, 0);
-            DirectionUnitVector = DirectionVector.Normalized();
-            TargetDestinationPosition = GlobalPosition;
-        }
-
-        if(collision_info != null)
-        {
-            IsMoving = false;
-           // GD.Print("Player collided at " + GlobalPosition);
-            Velocity = new Vector2(0, 0);
-            DirectionVector = new Vector2(0,0);
             DirectionUnitVector = DirectionVector.Normalized();
             TargetDestinationPosition = GlobalPosition;
 
@@ -158,11 +311,11 @@ public partial class Player : CharacterBody2D
 
                     this.Experience += monster_data.MonsterExp;
                     int index = (int)monster_data.MonsterRank;
-                    GD.Print("index: " + index + "    Rank killed: "+ monster_data.MonsterRank);
-                    
+                    GD.Print("index: " + index + "    Rank killed: " + monster_data.MonsterRank);
+
                     GD.Print("Experience: " + this.Experience);
                     GD.Print("Kill history[index]: " + this.KillHistory[index]);
-                    GD.Print("FullKill history: " + this.KillHistory[0] + "," + this.KillHistory[1] + "," + 
+                    GD.Print("FullKill history: " + this.KillHistory[0] + "," + this.KillHistory[1] + "," +
                         this.KillHistory[2] + "," + this.KillHistory[3] + "," + this.KillHistory[4]);
 
                     UpdateExperienceAndHistory_FromMonsterKill(monster_data);
@@ -192,13 +345,16 @@ public partial class Player : CharacterBody2D
         UpdateHealthBar();
 
         // animate our sprite
-        DoSpriteAnimation(true);
+        UpdateAnimations(true);
+
+        // update UI
+        var ui = GetNode<Ui>("../HUD/UI");
+        ui.Update(this);
     }
 
-    private void DoSpriteAnimation(bool is_moving = true)
+    private void UpdateAnimations(bool is_moving = true)
     {
         string animation_string = "";
-        GD.Print("in DoSpriteAnimation");
 
         if(is_moving is true)
         //if (is_moving == true)
@@ -274,8 +430,6 @@ public partial class Player : CharacterBody2D
                     }
             }
         }
-
-        GD.Print("animation_string: " + animation_string);
 
         var animated_sprite = GetNode<AnimatedSprite2D>("AnimatedSprite2D");
         animated_sprite.Play(animation_string);

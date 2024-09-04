@@ -112,10 +112,37 @@ namespace ProjectDuhamel.scripts
                 if (collision.GetCollider() is MonsterObject)
                 {
                     var monster_obj = (MonsterObject)collider_obj;
+                    var monster_data = monster_obj.monsterData.Copy();  // copy the data in case the monster dies in the next line
 
+                    // Damage the monster
+                    // this line can kill the mosnter and remove it from game -- so use the copied data after this
                     monster_obj.TakeDamage(Utilities.GetRandomNumber(spellData.SpellMinDamage, spellData.SpellMaxDamage));
 
                     GD.Print("Spell hit a monster");
+
+                    // check if we killed the monster
+                    if (monster_obj == null || monster_obj.monsterData.MonsterHitPoints <= 0)
+                    {
+                        Player player = GetNode<Player>("../../Player") as Player;
+                        //GD.Print("player killed the monster");
+                        //GD.Print("exp earned: " + monster_data.MonsterExp);
+
+                        //this.Experience += monster_data.MonsterExp;
+                        //int index = (int)monster_data.MonsterRank;
+                        //GD.Print("index: " + index + "    Rank killed: " + monster_data.MonsterRank);
+
+                        //GD.Print("Experience: " + this.Experience);
+                        //GD.Print("Kill history[index]: " + this.KillHistory[index]);
+                        //GD.Print("FullKill history: " + this.KillHistory[0] + "," + this.KillHistory[1] + "," +
+                        //    this.KillHistory[2] + "," + this.KillHistory[3] + "," + this.KillHistory[4]);
+
+                        player.UpdateExperienceAndHistory_FromMonsterKill(monster_data);
+
+                    }
+
+
+
+
                 }
                 else if (collision.GetCollider() is RoomObject)
                 {

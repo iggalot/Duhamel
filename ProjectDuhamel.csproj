@@ -6,9 +6,12 @@
     <EnableDynamicLoading>true</EnableDynamicLoading>
   </PropertyGroup>
   <ItemGroup>
+    <Folder Include="models\items\data\" />
+    <Folder Include="models\items\graphics\" />
     <Folder Include="models\monsters\data\" />
     <Folder Include="models\rooms\data\" />
     <Folder Include="models\rooms\graphics\" />
     <Folder Include="models\spells\data\" />
+    <Folder Include="scenes\" />
   </ItemGroup>
 </Project>

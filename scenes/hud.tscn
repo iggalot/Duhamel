@@ -1,0 +1,12 @@
+[gd_scene load_steps=2 format=3 uid="uid://b82633ek2pr53"]
+
+[ext_resource type="PackedScene" uid="uid://m6kyv7nejtv8" path="res://scenes/ui.tscn" id="1_ayyuw"]
+
+[node name="CanvasLayer" type="CanvasLayer"]
+
+[node name="ColorRect" type="ColorRect" parent="."]
+offset_right = 122.0
+offset_bottom = 237.0
+color = Color(0, 0, 0, 1)
+
+[node name="UI" parent="." instance=ExtResource("1_ayyuw")]

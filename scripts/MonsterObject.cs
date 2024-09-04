@@ -168,16 +168,17 @@ namespace ProjectDuhamel.scripts
                     }
                     else
                     {
-                        GD.Print("Monster can't attack again yet");
+                       // GD.Print("Monster can't attack again yet");
                     }
                     CanAttackAgain = false;
 
                     // check if we killed the monster
                     if (monsterData.MonsterHitPoints <= 0)
                     {
-                        Player player = GetNode<Player>("..");
+                        Node root_node = GetTree().GetRoot();
+                        Player player = root_node.GetNode<Player>("LevelTemplate/Player");
 
-                        GD.Print("spell killed the monster");
+                        //GD.Print("spell killed the monster");
                         player.UpdateExperienceAndHistory_FromMonsterKill(monsterData);
 
                         // then free the monster node from memory

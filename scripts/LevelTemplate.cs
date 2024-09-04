@@ -1,4 +1,6 @@
 using Godot;
+using ProjectDuhamel.models.inventory;
+using ProjectDuhamel.models.items;
 using ProjectDuhamel.models.monsters;
 using ProjectDuhamel.models.spells;
 using ProjectDuhamel.scripts;
@@ -50,11 +52,13 @@ public enum CollisionMaskAssignments
 public partial class LevelTemplate : Node2D
 {
     // constant that sets the limits for how close something can spawn near another object
-    private const float DEFAULT_SPAWN_MIN_SAFE_DIST = 100.0f;
+    private const float DEFAULT_SPAWN_MIN_SAFE_DIST = 200.0f;
 
 
     SpellManager spellManager { get; set; }
     MonsterManager monsterManager { get; set; }
+    InventoryManager inventoryManager { get; set; }
+    ItemManager itemManager { get; set; }
 
     PackedScene RoomObjectScene = GD.Load<PackedScene>("res://scenes/room_object.tscn");
     PackedScene MonsterObjectScene = GD.Load<PackedScene>("res://scenes/monster_object.tscn");
@@ -207,6 +211,12 @@ public partial class LevelTemplate : Node2D
         // create our spellManager and monsterManager for handling creation of spell and monster data and graphics
         spellManager = new SpellManager(spell_effects_map_layer);
         monsterManager = new MonsterManager(spell_effects_map_layer);
+        itemManager = new ItemManager();
+        inventoryManager = new InventoryManager();
+
+        // set the player in the player inventory manager
+        Player player = GetNode<CharacterBody2D>("Player") as Player;
+        inventoryManager.AddPlayerEntryToDictionary(player, player.PlayerInventory);
 
         // create a shape by determining the number of tiles for the room and the walls in each direction
         num_floor_tiles_hor = (int)Math.Ceiling((double)(roomWidth / tileSize));
@@ -680,7 +690,7 @@ public partial class LevelTemplate : Node2D
         if (dist_to_player < min_safe_dist)
         {
             too_close = true;
-            GD.Print("too close to player -- skipping this spawn");
+            //GD.Print("too close to player -- skipping this spawn");
         }
 
         // check distances to all room objects
@@ -691,7 +701,7 @@ public partial class LevelTemplate : Node2D
             if (dist_to_room_obj < min_safe_dist)
             {
                 too_close = true;
-                GD.Print("too close to ro0m object -- skipping this spawn");
+                //GD.Print("too close to ro0m object -- skipping this spawn");
                 break;
             }
         }
@@ -704,7 +714,7 @@ public partial class LevelTemplate : Node2D
             if (dist_to_monster_obj < min_safe_dist)
             {
                 too_close = true;
-                GD.Print("too close to monster object -- skipping this spawn");
+                //GD.Print("too close to monster object -- skipping this spawn");
                 break;
             }
         }
