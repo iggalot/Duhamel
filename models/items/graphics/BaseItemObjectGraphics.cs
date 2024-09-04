@@ -1,18 +1,17 @@
 ﻿using Godot;
-using ProjectDuhamel.models.items;
 using ProjectDuhamel.scripts;
 using System.Collections.Generic;
 
-namespace ProjectDuhamel.models.monsters
+namespace ProjectDuhamel.models.items
 {
-    public partial class BaseMonsterObjectGraphics : RoomObject
+    public partial class BaseItemObjectGraphics : RoomObject
     {
-        public MonsterIdentifiers ID { get; set; } = MonsterIdentifiers.MONSTER_RACE_UNDEFINED;
+        public int ID { get; set; } = -1;
 
-        // Contains the texture(s) for the spell
+        // Contains the textures for the item
         public List<Texture2D> Textures { get; set; } = new List<Texture2D>();
 
-        // The tilemap layer that the graphic will be drawn on.
+        // The tilemap image layer that the graphic will be drawn on.
         public TileMapLayer GraphicsLayer { get; set; } = null;
 
         public float ScaleFactor { get; set; } = 1.0f;
@@ -20,15 +19,14 @@ namespace ProjectDuhamel.models.monsters
         /// <summary>
         /// Parameterless constructor
         /// </summary>
-        public BaseMonsterObjectGraphics()
+        public BaseItemObjectGraphics()
         {
                 
         }
 
-        public BaseMonsterObjectGraphics( MonsterIdentifiers monster_id, string asset_path, TileMapLayer layer, 
-            int tile_set_source_id, Vector2I[] atlas_coord)
+        public BaseItemObjectGraphics(int item_id, string asset_path, TileMapLayer layer, int tile_set_source_id, Vector2I[] atlas_coord)
         {
-            this.ID = monster_id;
+            this.ID = item_id;
 
             this.AssetPath = asset_path;
             this.GraphicsLayer = layer;
@@ -36,6 +34,7 @@ namespace ProjectDuhamel.models.monsters
             this.AtlasCoordArray = atlas_coord;
 
             Textures = MakeTextures();
+            GD.Print("Made " + Textures.Count + " textures");
         }
 
         private List<Texture2D> MakeTextures()
@@ -80,7 +79,7 @@ namespace ProjectDuhamel.models.monsters
 
                 var region = new Rect2(AtlasCoordArray[i].X * 16, AtlasCoordArray[i].Y * 16, 16, 16);
                 atlas_texture.Region = region;
-                
+
                 //GD.Print("atlas_texture" + atlas_texture);
 
                 temp_list.Add(atlas_texture);
@@ -95,38 +94,40 @@ namespace ProjectDuhamel.models.monsters
         public Texture2D GetTextureRandom()
         {
             var rng = new RandomNumberGenerator();
-            return Textures[rng.RandiRange(0, Textures.Count - 1)];
+            return this.Textures[rng.RandiRange(0, this.Textures.Count - 1)];
         }
 
         // Returns a specified texture
         public Texture2D GetTexture(int index = 0)
         {
-            if (index >= 0 && index < Textures.Count)
+            GD.Print("Texture count: " + this.Textures.Count);
+            if (index >= 0 && index < this.Textures.Count)
             {
-                return Textures[index];
+                return this.Textures[index];
             }
             else
             {
-                GD.Print("Invalid index (" + index + ") passed to GetTexture() in BaseMonsterObjectGraphics.cs");
+                GD.Print("Invalid index (" + index + ") passed to GetTexture() in BaseItemObjectGraphics.cs");
                 return GD.Load("res://icon.svg") as Texture2D;
                 // TODO:  Load a placeholder instead?
             }
         }
 
-
         /// <summary>
         /// Returns a copy of this object
         /// </summary>
         /// <returns></returns>
-        public BaseMonsterObjectGraphics Copy()
+        public BaseItemObjectGraphics Copy()
         {
-            return new BaseMonsterObjectGraphics
+            return new BaseItemObjectGraphics
             {
                 ID = this.ID,
                 AssetPath = this.AssetPath,
                 GraphicsLayer = this.GraphicsLayer,
                 TileSetSourceId = this.TileSetSourceId,
-                AtlasCoordArray = this.AtlasCoordArray
+                AtlasCoordArray = this.AtlasCoordArray,
+
+                Textures = this.Textures
             };
         }
     }

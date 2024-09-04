@@ -1,5 +1,6 @@
 using Godot;
 using ProjectDuhamel.models.inventory;
+using ProjectDuhamel.models.items;
 using ProjectDuhamel.models.monsters;
 using ProjectDuhamel.scripts;
 using System;
@@ -45,125 +46,8 @@ public partial class Player : CharacterBody2D
         if (input_event.IsActionPressed("ui_inventory"))
         {
             GD.Print("opening inventory");
+            PlayerInventory.Display(this);
 
-            // instantiate the inventory scene
-            //PackedScene inv_scene = GD.Load<PackedScene>("res://scenes/inventory_ui.tscn");
-            //Node inv_instance = inv_scene.Instantiate();
-            //AddChild(inv_instance);
-            //inv_instance.Name = "UI for Inventory";
-
-            CanvasLayer ui = GetNode<CanvasLayer>("InventoryUI");
-
-            Control ui_control = GetNode<Control>("InventoryUI/ColorRect/Inventory_UI");
-
-
-            Label ui_label = ui.GetNode<Label>("ColorRect/Label");
-            ui.Visible = !ui.Visible;  // toggle the visibility of the inventory
-
-            // now add a item slot to the inventory window
-
-            
-            InventorySlot slot = new InventorySlot();
-
-            PackedScene slot_scene = GD.Load<PackedScene>("res://scenes/inventory_slot.tscn");
-            Node slot_instance = slot_scene.Instantiate();
-            Node slot_instance2 = slot_scene.Instantiate();
-            Node slot_instance3 = slot_scene.Instantiate();
-            Node slot_instance4 = slot_scene.Instantiate();
-            Node slot_instance5 = slot_scene.Instantiate();
-            Node slot_instance6 = slot_scene.Instantiate();
-            Node slot_instance7 = slot_scene.Instantiate();
-            Node slot_instance8 = slot_scene.Instantiate();
-            Node slot_instance9 = slot_scene.Instantiate();
-            Node slot_instance10 = slot_scene.Instantiate();
-
-
-            slot_instance.Name = "Slot 1";
-            slot_instance2.Name = "Slot 2";
-            slot_instance3.Name = "Slot 3";
-            slot_instance4.Name = "Slot 4";
-            slot_instance5.Name = "Slot 5";
-            slot_instance6.Name = "Slot 6";
-            slot_instance7.Name = "Slot 7";
-            slot_instance8.Name = "Slot 8";
-            slot_instance9.Name = "Slot 9";
-            slot_instance10.Name = "Slot 10";
-
-
-
-            ui_control.Scale = new Vector2(0.5f, 0.5f);
-
-            Label label1 = slot_instance.GetNode<Label>("DetailsPanel/ItemName");
-            label1.Text = "item 1";
-            Label label2 = slot_instance2.GetNode<Label>("DetailsPanel/ItemName");
-            label2.Text = "item 2";
-            Label label3 = slot_instance3.GetNode<Label>("DetailsPanel/ItemName");
-            label3.Text = "item 3";
-            Label label4 = slot_instance4.GetNode<Label>("DetailsPanel/ItemName");
-            label4.Text = "item 4";
-            Label label5 = slot_instance5.GetNode<Label>("DetailsPanel/ItemName");
-            label5.Text = "item 5";
-            Label label6 = slot_instance6.GetNode<Label>("DetailsPanel/ItemName");
-            label6.Text = "item 6";
-            Label label7 = slot_instance7.GetNode<Label>("DetailsPanel/ItemName");
-            label7.Text = "item 7";
-            Label label8 = slot_instance8.GetNode<Label>("DetailsPanel/ItemName");
-            label8.Text = "item 8";
-            Label label9 = slot_instance9.GetNode<Label>("DetailsPanel/ItemName");
-            label9.Text = "item 9";
-            Label label10 = slot_instance10.GetNode<Label>("DetailsPanel/ItemName");
-            label10.Text = "item 10";
-
-            GridContainer container = ui_control.GetNode<GridContainer>("GridContainer");
-            container.AddChild(slot_instance);
-            container.AddChild(slot_instance2);
-            container.AddChild(slot_instance3);
-            container.AddChild(slot_instance4);
-            container.AddChild(slot_instance5);
-            container.AddChild(slot_instance6);
-            container.AddChild(slot_instance7);
-            container.AddChild(slot_instance8);
-            container.AddChild(slot_instance9);
-            container.AddChild(slot_instance10);
-
-            //Node root_node = GetTree().GetRoot();
-            //Node2D level = root_node.GetNode<Node2D>("LevelTemplate");
-            //level.AddChild(inv_instance);
-
-            //            Node inv_instance = inv_scene.Instantiate();
-            //            GridContainer grid_cont = inv_instance.GetNode<GridContainer>("GridContainer");
-
-            ////            for (int i = 0; i < PlayerInventory.InventoryItems.Length; i++)
-            ////            {
-            // //               if (PlayerInventory.InventoryItems[i] != null)
-            // //               {
-            // //                   GD.Print(PlayerInventory.InventoryItems[i].ItemName);
-            //                    Node slot_instance =slot_scene.Instantiate();
-            //                    Node item_instance = item_scene.Instantiate();
-
-            //                    InventoryItem item = new InventoryItem();
-            //                    item.ItemName = "test item";
-            //                    item.ItemEffect = "test effect";
-            //                    item.ItemType = "test type";
-
-            //                    var label1 = slot_instance.GetNode<Label>("InnerBorder/ItemQuantity");
-            //                    label1.Text = "1";
-            //                    var det_label1 = slot_instance.GetNode<Label>("DetailsPanel/ItemName");
-            //                    det_label1.Text = item.ItemName;
-            //                    var det_label2 = slot_instance.GetNode<Label>("DetailsPanel/ItemEffect");
-            //                    det_label2.Text = item.ItemEffect;
-            //                    var det_label3 = slot_instance.GetNode<Label>("DetailsPanel/ItemType");
-            //                    det_label3.Text = item.ItemType;
-
-            //                    grid_cont.AddChild(slot_instance);
-
-            //                    UIInventory.Visible = !UIInventory.Visible;
-            // //               }
-            ////            }
-
-
-
-            GetTree().Paused = !GetTree().Paused;
         }
     }
     private void GetInput()
@@ -212,10 +96,13 @@ public partial class Player : CharacterBody2D
         // set the global player reference noe as this player
         GlobalScripts.SetPlayerReference(this);
 
-        // set the animated sprite and interact ui nodes for this player
+        // setup getters and setters for nodes on our Player scene
         AnimatedSprite = GetNode<AnimatedSprite2D>("AnimatedSprite2D");
         UIInteract = GetNode<CanvasLayer>("InteractUI");
         UIInventory = GetNode<CanvasLayer>("InventoryUI");
+
+        // create our inventory
+        PlayerInventory = new Inventory(DEFAULT_INV_SIZE);
 
         GlobalPosition = new Vector2(150, 100);
 

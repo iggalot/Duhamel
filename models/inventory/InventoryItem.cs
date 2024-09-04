@@ -1,4 +1,5 @@
 ﻿using Godot;
+using ProjectDuhamel.models.items;
 
 namespace ProjectDuhamel.models.inventory
 {
@@ -9,13 +10,14 @@ namespace ProjectDuhamel.models.inventory
         private GlobalScripts global_scripts { get; set; } = null;
 
         // item details for editor window
-        [Export] public string ItemType { get; set; } = "";
-
-        [Export] public string ItemName { get; set; } = "";
-
-        [Export] public string ItemEffect { get; set; } = "";
-        [Export] public Texture2D ItemTexture { get; set; }
-        [Export] public string ItemTextureStringPath { get; set; } = "res://assets/items/icon3.png";
+        public ItemData itemData { get; set; }
+        public BaseItemObjectGraphics itemGraphics { get; set; }
+        
+        public ItemTypes ItemType { get => itemData.ItemType;  }
+        public string ItemName { get => itemData.ItemName; }
+        public string ItemEffect { get => itemData.ItemEffect; }
+        public Texture2D ItemTexture { get => itemGraphics.GetTexture(0); }
+        public string ItemTextureStringPath { get => itemGraphics.GetTexture(0).ResourcePath; }
 
         // scene-tree node reference
         public string ScenePath { get; set; } = "res://scenes/InventoryItem.tscn";
@@ -29,12 +31,10 @@ namespace ProjectDuhamel.models.inventory
 
         public InventoryItem() { }
 
-        public InventoryItem(int quantity, string itemType, string itemName, Texture2D itemTexture, string itemEffect)
+        public InventoryItem(ItemData item_data, BaseItemObjectGraphics item_graphics)
         {
-            Quantity = quantity;
-            ItemType = itemType;
-            ItemName = itemName;
-            ItemEffect = itemEffect;
+            itemData = item_data;
+            itemGraphics = item_graphics;
         }
 
         // called when the node enters the scene tree for the first time
@@ -62,8 +62,8 @@ namespace ProjectDuhamel.models.inventory
             collision.SetCollisionMaskValue((int)CollisionLayerAssignments.MONSTERS, true);  // assign to proper layer
             collision.SetCollisionMaskValue((int)CollisionLayerAssignments.PLAYER, true);  // assign to proper layer
 
-            ItemTexture = GD.Load(ItemTextureStringPath) as Texture2D;
-
+            //ItemTexture = GD.Load(ItemTextureStringPath) as Texture2D;
+            
 
             if (!Engine.IsEditorHint())
             {
@@ -74,7 +74,7 @@ namespace ProjectDuhamel.models.inventory
         // Called every frame. 'delta' is the elapsed time since the previous frame.
         public override void _Process(double delta)
         {
-            ItemTexture = GD.Load(ItemTextureStringPath) as Texture2D;
+            //ItemTexture = GD.Load(ItemTextureStringPath) as Texture2D;
 
             if (Engine.IsEditorHint())
             {
@@ -89,21 +89,22 @@ namespace ProjectDuhamel.models.inventory
 
         public void PickupItem()
         {
+            GD.Print("Picked up item: " + ItemName);
             var item = new InventoryItem()
             {
-                Quantity = 1,
-                ItemType = this.ItemType,
-                ItemName = this.ItemName,
-                ItemTexture = this.ItemTexture,
-                ItemEffect = this.ItemEffect,
-                ScenePath = this.ScenePath
+                //Quantity = 1,
+                //ItemType = this.ItemType,
+                //ItemName = this.ItemName,
+                //ItemTexture = this.ItemTexture,
+                //ItemEffect = this.ItemEffect,
+                //ScenePath = this.ScenePath
             };
 
-            if (GlobalScripts.player_node != null)
-            {
-                GlobalScripts.AddItem(item);
-                this.QueueFree();
-            }
+            //if (GlobalScripts.player_node != null)
+            //{
+            //    GlobalScripts.AddItem(item);
+            //    this.QueueFree();
+            //}
         }
 
         public void _on_area_2d_body_entered(Node2D body)
@@ -120,7 +121,6 @@ namespace ProjectDuhamel.models.inventory
 
         public void _on_area_2d_body_exited(Node2D body)
         {
-
             if (body.IsInGroup("Player"))
             {
                 var player = body as Player;
@@ -129,21 +129,16 @@ namespace ProjectDuhamel.models.inventory
             }
         }
 
-        public void SetItemData(InventoryItem data)
+        public void SetItemData(ItemData data)
         {
-            this.ItemType = data.ItemType;
-            this.ItemName = data.ItemName;
-            this.ItemTexture = data.ItemTexture;
-            this.ItemEffect = data.ItemEffect;
+            itemData = data;
         }
-
-
 
 
         // make a copy of the item for changeable values
         public InventoryItem Copy()
         {
-            return new InventoryItem(Quantity, ItemType, ItemName, null, ItemEffect);
+            return new InventoryItem(itemData, itemGraphics);
         }
     }
 }

@@ -79,13 +79,13 @@ namespace ProjectDuhamel.models.inventory
         {
             DetailsPanel.Visible = false;
 
-            GD.Print("item button exited");
+           // GD.Print("item button exited");
         }
 
         // our hover state
         public void _on_item_button_mouse_entered()
         {
-            GD.Print("item button entered");
+            //GD.Print("item button entered");
             UsagePanel.Visible = false;
             DetailsPanel.Visible = true;
 
@@ -94,15 +94,13 @@ namespace ProjectDuhamel.models.inventory
         // hide item details on hover exit
         public void _on_item_button_pressed()
         {
-            GD.Print("item button pressed");
+            //GD.Print("item button pressed");
             DetailsPanel.Visible = false;
             UsagePanel.Visible = true;
         }
 
         public void SetEmpty()
         {
-            GD.Print("item icon: " + ItemIcon.Name);
-            GD.Print("item icon texture: " + ItemIcon.Texture);
             ItemIcon.Texture = null;
             QuantityLabel.Text = "";
         }
@@ -113,7 +111,7 @@ namespace ProjectDuhamel.models.inventory
             ItemIcon.Texture = new_item.ItemTexture; ;
             QuantityLabel.Text = new_item.Quantity.ToString();
             ItemName.Text = new_item.ItemName;
-            ItemType.Text = new_item.ItemType;
+            ItemType.Text = new_item.ItemType.ToString();
             if (Item.ItemEffect != String.Empty)
             {
                 ItemEffect.Text = "+ " + Item.ItemEffect.ToString();

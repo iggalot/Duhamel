@@ -1,4 +1,5 @@
 ﻿using Godot;
+using ProjectDuhamel.models.monsters;
 using ProjectDuhamel.scripts;
 using System.Collections.Generic;
 
@@ -95,12 +96,29 @@ namespace ProjectDuhamel.models.spells
             if(index >= 0 && index < Texture.Count)
             {
                 return Texture[index];
-            } else
+            }
+            else
             {
                 GD.Print("Invalid index (" + index + ") passed to GetTexture() in BaseSpellObjectGraphics.cs");
-                return Texture[0];
+                return GD.Load("res://icon.svg") as Texture2D;
                 // TODO:  Load a placeholder instead?
             }
+        }
+
+        /// <summary>
+        /// Returns a copy of this object
+        /// </summary>
+        /// <returns></returns>
+        public BaseSpellObjectGraphics Copy()
+        {
+            return new BaseSpellObjectGraphics
+            {
+                ID = this.ID,
+                AssetPath = this.AssetPath,
+                GraphicsLayer = this.GraphicsLayer,
+                TileSetSourceId = this.TileSetSourceId,
+                AtlasCoordArray = this.AtlasCoordArray
+            };
         }
     }
 }

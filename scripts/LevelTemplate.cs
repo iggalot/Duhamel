@@ -84,7 +84,7 @@ public partial class LevelTemplate : Node2D
     // Our tilemap layers for our template
     public TileMapLayer floor_effects_map_layer { get; set; }
     public TileMapLayer wall_effects_map_layer { get; set; }
-    public TileMapLayer item_effects_map_layer { get; set; }
+    public TileMapLayer item_map_layer { get; set; }
     public TileMapLayer spell_effects_map_layer { get; set; }
     public TileMapLayer monster_map_layer { get; set; }
 
@@ -204,19 +204,32 @@ public partial class LevelTemplate : Node2D
         // setup our layer constants
         floor_effects_map_layer = GetNode<TileMapLayer>(floor);
         wall_effects_map_layer = GetNode<TileMapLayer>(walls);
-        item_effects_map_layer = GetNode<TileMapLayer>(items);
+        item_map_layer = GetNode<TileMapLayer>(items);
         spell_effects_map_layer = GetNode<TileMapLayer>(spell_effects);
         monster_map_layer = GetNode<TileMapLayer>(monsters);
 
         // create our spellManager and monsterManager for handling creation of spell and monster data and graphics
         spellManager = new SpellManager(spell_effects_map_layer);
         monsterManager = new MonsterManager(spell_effects_map_layer);
-        itemManager = new ItemManager();
+        itemManager = new ItemManager(item_map_layer);
         inventoryManager = new InventoryManager();
 
         // set the player in the player inventory manager
         Player player = GetNode<CharacterBody2D>("Player") as Player;
         inventoryManager.AddPlayerEntryToDictionary(player, player.PlayerInventory);
+
+        // load some items into player inventory
+        for (int i = 0; i < 10; i++)
+        {
+            ItemData item_data = itemManager.baseItemData[i].Copy();
+            BaseItemObjectGraphics item_graphics = itemManager.itemObjectGraphicsDictionary[i].Copy();
+            InventoryItem new_inv_item = new InventoryItem(item_data, item_graphics);
+            player.PlayerInventory.AddItem(new_inv_item, 1);
+        }
+
+
+
+
 
         // create a shape by determining the number of tiles for the room and the walls in each direction
         num_floor_tiles_hor = (int)Math.Ceiling((double)(roomWidth / tileSize));

@@ -1,11 +1,9 @@
-[gd_scene load_steps=17 format=3 uid="uid://boxtanct5xyqk"]
+[gd_scene load_steps=15 format=3 uid="uid://boxtanct5xyqk"]
 
 [ext_resource type="Script" path="res://scripts/LevelTemplate.cs" id="1_f5gc4"]
-[ext_resource type="Texture2D" uid="uid://v1vvo3mkag8k" path="res://assets/character_and_tileset/Dungeon_Character.png" id="3_mvc0a"]
 [ext_resource type="Texture2D" uid="uid://c4hqmaees5my7" path="res://spell-effects.png" id="3_xf0x3"]
 [ext_resource type="Texture2D" uid="uid://b3umw4syshmf6" path="res://assets/character_and_tileset/Dungeon_Tileset.png" id="4_j6b76"]
 [ext_resource type="PackedScene" uid="uid://cecycgfnob7ti" path="res://scenes/player.tscn" id="5_ecym2"]
-[ext_resource type="Texture2D" uid="uid://vrb1ndxsqx7k" path="res://assets/items/icon3.png" id="8_c5v00"]
 [ext_resource type="PackedScene" uid="uid://b82633ek2pr53" path="res://scenes/hud.tscn" id="9_meysp"]
 [ext_resource type="PackedScene" uid="uid://bcjqhylfub4ok" path="res://scenes/inventory_item.tscn" id="10_dsi1p"]
 
@@ -221,8 +219,8 @@ texture = ExtResource("4_j6b76")
 [sub_resource type="TileSet" id="TileSet_jt27j"]
 sources/0 = SubResource("TileSetAtlasSource_54pvx")
 
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_g27vi"]
-texture = ExtResource("3_mvc0a")
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_csflw"]
+texture = ExtResource("4_j6b76")
 0:0/0 = 0
 1:0/0 = 0
 2:0/0 = 0
@@ -230,6 +228,9 @@ texture = ExtResource("3_mvc0a")
 4:0/0 = 0
 5:0/0 = 0
 6:0/0 = 0
+7:0/0 = 0
+8:0/0 = 0
+9:0/0 = 0
 0:1/0 = 0
 1:1/0 = 0
 2:1/0 = 0
@@ -237,6 +238,9 @@ texture = ExtResource("3_mvc0a")
 4:1/0 = 0
 5:1/0 = 0
 6:1/0 = 0
+7:1/0 = 0
+8:1/0 = 0
+9:1/0 = 0
 0:2/0 = 0
 1:2/0 = 0
 2:2/0 = 0
@@ -244,6 +248,9 @@ texture = ExtResource("3_mvc0a")
 4:2/0 = 0
 5:2/0 = 0
 6:2/0 = 0
+7:2/0 = 0
+8:2/0 = 0
+9:2/0 = 0
 0:3/0 = 0
 1:3/0 = 0
 2:3/0 = 0
@@ -251,9 +258,72 @@ texture = ExtResource("3_mvc0a")
 4:3/0 = 0
 5:3/0 = 0
 6:3/0 = 0
+7:3/0 = 0
+8:3/0 = 0
+9:3/0 = 0
+0:4/0 = 0
+1:4/0 = 0
+2:4/0 = 0
+3:4/0 = 0
+4:4/0 = 0
+5:4/0 = 0
+6:4/0 = 0
+7:4/0 = 0
+8:4/0 = 0
+9:4/0 = 0
+0:5/0 = 0
+1:5/0 = 0
+2:5/0 = 0
+3:5/0 = 0
+4:5/0 = 0
+5:5/0 = 0
+6:5/0 = 0
+7:5/0 = 0
+8:5/0 = 0
+9:5/0 = 0
+0:6/0 = 0
+1:6/0 = 0
+2:6/0 = 0
+3:6/0 = 0
+4:6/0 = 0
+5:6/0 = 0
+6:6/0 = 0
+7:6/0 = 0
+8:6/0 = 0
+9:6/0 = 0
+0:7/0 = 0
+1:7/0 = 0
+2:7/0 = 0
+3:7/0 = 0
+4:7/0 = 0
+5:7/0 = 0
+6:7/0 = 0
+7:7/0 = 0
+8:7/0 = 0
+9:7/0 = 0
+0:8/0 = 0
+1:8/0 = 0
+2:8/0 = 0
+3:8/0 = 0
+4:8/0 = 0
+5:8/0 = 0
+6:8/0 = 0
+7:8/0 = 0
+8:8/0 = 0
+9:8/0 = 0
+0:9/0 = 0
+1:9/0 = 0
+2:9/0 = 0
+3:9/0 = 0
+4:9/0 = 0
+5:9/0 = 0
+6:9/0 = 0
+7:9/0 = 0
+8:9/0 = 0
+9:9/0 = 0
 
-[sub_resource type="TileSet" id="TileSet_ywynj"]
-sources/2 = SubResource("TileSetAtlasSource_g27vi")
+[sub_resource type="TileSet" id="TileSet_5taeq"]
+sources/0 = SubResource("TileSetAtlasSource_csflw")
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_minyy"]
 texture = ExtResource("3_xf0x3")
@@ -288,7 +358,7 @@ z_index = 1
 tile_set = SubResource("TileSet_jt27j")
 
 [node name="Items" type="TileMapLayer" parent="."]
-tile_set = SubResource("TileSet_ywynj")
+tile_set = SubResource("TileSet_5taeq")
 
 [node name="SpellEffects" type="TileMapLayer" parent="."]
 z_index = 4
@@ -311,11 +381,9 @@ autostart = true
 
 [node name="Inventory_Item" parent="." instance=ExtResource("10_dsi1p")]
 position = Vector2(50, 50)
-ItemTexture = ExtResource("8_c5v00")
 
 [node name="Inventory_Item2" parent="." instance=ExtResource("10_dsi1p")]
 position = Vector2(200, 65)
 scale = Vector2(1.01085, 1.01839)
-ItemTexture = ExtResource("8_c5v00")
 
 [connection signal="timeout" from="MonsterSpawnTimer" to="." method="_on_monster_spawn_timer_timeout"]

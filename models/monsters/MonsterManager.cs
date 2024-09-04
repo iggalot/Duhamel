@@ -1,12 +1,8 @@
 ﻿using Godot;
-using Godot.Collections;
 using ProjectDuhamel.scripts;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Reflection.Metadata;
-using System.Text;
-using System.Xml.Linq;
 
 namespace ProjectDuhamel.models.monsters
 {
@@ -196,7 +192,7 @@ namespace ProjectDuhamel.models.monsters
         public System.Collections.Generic.Dictionary<MonsterIdentifiers, BaseMonsterObjectGraphics> monsterObjectGraphicsDictionary { get; set; } = new System.Collections.Generic.Dictionary<MonsterIdentifiers, BaseMonsterObjectGraphics>();
         public System.Collections.Generic.Dictionary<MonsterIdentifiers, Vector2I[]> monsterAtlasArray { get; set; } = new System.Collections.Generic.Dictionary<MonsterIdentifiers, Vector2I[]>();
 
-        #region TilesetImage Vectors -- Used for atast array coords
+        #region TilesetImage Vectors -- Used for atas array coords
 
         Vector2I[] monster_images_tiles =
         {
